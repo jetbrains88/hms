@@ -1,0 +1,42 @@
+services:
+  app:
+    image: hms_app:latest
+    container_name: hms_app
+    restart: always
+    environment:
+      - DB_HOST=db
+      - DB_DATABASE=hms
+    networks:
+      - hms_network
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:alpine
+    container_name: hms_nginx
+    restart: always
+    networks:
+      - hms_network
+    depends_on:
+      - app
+
+  db:
+    image: mysql:8.0
+    container_name: hms_database
+    restart: always
+    environment:
+      MYSQL_DATABASE: hms
+      MYSQL_ROOT_PASSWORD: my-secret-pwd
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - hms_network
+
+networks:
+  hms_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
