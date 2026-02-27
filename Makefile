@@ -1,13 +1,23 @@
 # Variables
 COMPOSE=docker compose
+EXEC=$(COMPOSE) exec app
 
-.PHONY: up down build watch tinker migrate fresh test logs cache-clear
+.PHONY: setup up down build dev fresh-env tinker migrate fresh test logs cache-clear
+
+# 🚀 Full First-Time Setup
+# Use this to get a brand new environment running from zero
+setup: build-no-cache
+	$(COMPOSE) up -d
+	sleep 5
+	$(EXEC) php artisan key:generate
+	$(EXEC) php artisan migrate:fresh --seed
+	@echo "✅ Setup complete! Visit http://localhost:8080"
 
 # Start the environment in the background
 up:
 	$(COMPOSE) up -d
 
-# Start the environment with Watch mode enabled (Best for dev)
+# Start with Watch mode (Best for active coding)
 dev:
 	$(COMPOSE) up --watch
 
@@ -15,45 +25,38 @@ dev:
 down:
 	$(COMPOSE) down
 
-# Rebuild images from scratch
-build:
+# Rebuild images without cache (Use when Dockerfile changes)
+build-no-cache:
 	$(COMPOSE) build --no-cache
 
+# Wipe volumes and rebuild (The 'Nuclear' option)
 fresh-env:
 	$(COMPOSE) down -v
-	$(COMPOSE) up --build --watch
+	$(COMPOSE) up -d --build
+	$(EXEC) php artisan key:generate || true
+	$(EXEC) php artisan migrate:fresh --seed
+	$(COMPOSE) logs -f
 
-# Jump into Laravel Tinker
+# 🛠 Laravel Commands
 tinker:
-	$(COMPOSE) exec app php artisan tinker
+	$(EXEC) php artisan tinker
 
-# Run migrations manually
 migrate:
-	$(COMPOSE) exec app php artisan migrate
+	$(EXEC) php artisan migrate
 
-# Refresh the database (Warning: Wipes data!)
 fresh:
-	$(COMPOSE) exec app php artisan migrate:fresh --seed
+	$(EXEC) php artisan migrate:fresh --seed
 
-# Run tests (Pest or PHPUnit)
 test:
-	$(COMPOSE) exec app php artisan test
+	$(EXEC) php artisan test
 
-# View real-time logs
 logs:
 	$(COMPOSE) logs -f
 
-# Clear all Laravel caches (route, config, cache)
+# 🧹 Maintenance
 cache-clear:
-	$(COMPOSE) exec app php artisan route:clear
-	$(COMPOSE) exec app php artisan config:clear
-	$(COMPOSE) exec app php artisan cache:clear
-	@echo "✅ All caches cleared successfully!"
+	$(EXEC) php artisan optimize:clear
+	@echo "✅ All caches cleared!"
 
-# Optional: Combined command to clear caches and then run migrations fresh
-fresh-clear: cache-clear fresh
-	@echo "✅ Caches cleared and database refreshed!"
-
-# Optional: Clear caches and restart containers
+# Optional: Clear everything and restart
 restart-clear: down up cache-clear
-	@echo "✅ Containers restarted and caches cleared!"

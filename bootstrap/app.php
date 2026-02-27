@@ -12,11 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'auth' => \App\Http\Middleware\AuthenticatedUser::class,
-            'role' => \App\Http\Middleware\CheckUserRole::class,
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
             'branch.context' => \App\Http\Middleware\BranchContext::class,
-            'permission' => \App\Http\Middleware\Permission::class,
-            'access' => \App\Http\Middleware\CheckAccess::class, // Combined middleware for role and permission checks
+            'permission' => \App\Http\Middleware\PermissionMiddleware::class,
+            'branch.access' => \App\Http\Middleware\CheckBranchAccess::class, // Combined middleware for role and permission checks
 
 
         ]);
