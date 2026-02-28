@@ -104,6 +104,43 @@ class NotificationService
     }
 
     /**
+     * Send new lab order notification to lab technician
+     */
+    public function newLabOrder(User $technician, $labOrder): Notification
+    {
+        $patient = $labOrder->patient;
+        $tests = $labOrder->items->pluck('labTestType.name')->implode(', ');
+        
+        return $this->send(
+            $technician,
+            'New Lab Order',
+            "New lab order for {$patient->name}. Tests: {$tests}",
+            'info',
+            $labOrder,
+            route('lab.orders.show', $labOrder),
+            'Process Order'
+        );
+    }
+
+    /**
+     * Send completed visit notification (typically to pharmacy)
+     */
+    public function visitCompleted(User $pharmacy, $visit): Notification
+    {
+        $patient = $visit->patient;
+        
+        return $this->send(
+            $pharmacy,
+            'Visit Completed',
+            "Visit completed for {$patient->name}. Review if any prescriptions need dispensing.",
+            'success',
+            $visit,
+            route('pharmacy.prescriptions.index'),
+            'View Prescriptions'
+        );
+    }
+
+    /**
      * Send stock alert notification to pharmacy
      */
     public function stockAlert(User $pharmacy, $alert): Notification

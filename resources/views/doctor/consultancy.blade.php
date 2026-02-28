@@ -425,7 +425,7 @@
 
                                         <!-- Continue Button (for in_progress status) -->
                                         <template x-if="consultation.status === 'in_progress'">
-                                            <a :href="`/doctor/consultation/${consultation.id}`"
+                                            <a :href="`/doctor/consultancy/${consultation.id}`"
                                                 class="group relative transition-colors duration-200 text-left inline-flex items-center w-full text-green-600 hover:text-green-800"
                                                 title="Continue this consultation">
                                                 <span class="inline-flex items-center mr-2 w-4 text-green-600">
@@ -448,7 +448,7 @@
 
                                         <!-- View Button (for completed status) -->
                                         <template x-if="consultation.status === 'completed'">
-                                            <a :href="`/doctor/consultation/${consultation.id}`"
+                                            <a :href="`/doctor/consultancy/${consultation.id}`"
                                                 class="group relative transition-colors duration-200 text-left inline-flex items-center w-full text-gray-600 hover:text-gray-800"
                                                 title="View consultation details">
                                                 <span class="inline-flex items-center mr-2 w-4 text-gray-600">
@@ -875,7 +875,7 @@
                     }
 
                     try {
-                        const response = await fetch(`/doctor/consultation/${this.currentVisitId}/cancel`, {
+                        const response = await fetch(`/doctor/consultancy/${this.currentVisitId}/cancel`, {
                             method: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
@@ -912,7 +912,7 @@
 
                 // Start consultation
                 startConsultation(visitId) {
-                    fetch(`/doctor/consultation/${visitId}/start`, {
+                    fetch(`/doctor/consultancy/${visitId}/start`, {
                             method: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
@@ -925,7 +925,7 @@
                             if (data.success) {
                                 this.showToast('Consultation started successfully', 'success');
                                 setTimeout(() => {
-                                    window.location.href = `/doctor/consultation/${visitId}`;
+                                    window.location.href = `/doctor/consultancy/${visitId}`;
                                 }, 1000);
                             } else {
                                 this.showToast(data.message, 'error');

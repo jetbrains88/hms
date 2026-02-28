@@ -42,6 +42,8 @@ class Medicine extends Model
         'requires_prescription'
     ];
 
+    protected $appends = ['stock'];
+
     protected $casts = [
         'is_global' => 'boolean',
         'is_active' => 'boolean',

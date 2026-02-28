@@ -144,13 +144,13 @@
                                                 Start
                                             </button>
                                         @elseif($visit->status == 'in_progress')
-                                            <a href="{{ route('doctor.consultation.view', $visit->id) }}"
+                                            <a href="{{ route('doctor.consultancy.show', $visit->id) }}"
                                                class="text-green-600 hover:text-green-900 text-sm font-bold">
                                                 <i class="fas fa-notes-medical mr-1"></i>
                                                 Continue
                                             </a>
                                         @else
-                                            <a href="{{ route('doctor.consultation.view', $visit->id) }}"
+                                            <a href="{{ route('doctor.consultancy.show', $visit->id) }}"
                                                class="text-gray-600 hover:text-gray-900 text-sm font-bold">
                                                 <i class="fas fa-eye mr-1"></i>
                                                 View
@@ -209,7 +209,7 @@
 
     <script>
         function startConsultation(visitId) {
-            fetch(`/doctor/consultation/${visitId}/start`, {
+            fetch(`/doctor/consultancy/${visitId}/start`, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -222,7 +222,7 @@
                     if (data.success) {
                         showNotification('Consultation started successfully', 'success');
                         setTimeout(() => {
-                            window.location.href = `/doctor/consultation/${visitId}`;
+                            window.location.href = `/doctor/consultancy/${visitId}`;
                         }, 1000);
                     } else {
                         showNotification(data.message, 'error');

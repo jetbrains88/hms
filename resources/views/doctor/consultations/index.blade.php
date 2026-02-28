@@ -448,25 +448,24 @@
 
                                         <!-- View Button (for completed status) -->
                                         <template x-if="consultation.status === 'completed'">
-                                            <a :href="`/doctor/consultancy/${consultation.id}`"
-                                                class="group relative transition-colors duration-200 text-left inline-flex items-center w-full text-gray-600 hover:text-gray-800"
-                                                title="View consultation details">
-                                                <span class="inline-flex items-center mr-2 w-4 text-gray-600">
-                                                    <i class="fas fa-eye"></i>
-                                                </span>
-                                                <span class="text-sm">View</span>
-                                                <!-- Tooltip -->
-                                                <div
-                                                    class="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
-                                                    <div
-                                                        class="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg whitespace-nowrap">
-                                                        <span class="font-semibold">View completed consultation</span>
-                                                        <div
-                                                            class="absolute bottom-0 left-4 transform translate-y-1/2 rotate-45 w-2 h-2 bg-gray-900">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </a>
+                                            <div class="flex flex-col space-y-1">
+                                                <a :href="`/doctor/consultancy/${consultation.id}`"
+                                                    class="group relative transition-colors duration-200 text-left inline-flex items-center w-full text-gray-600 hover:text-gray-800"
+                                                    title="View consultation details">
+                                                    <span class="inline-flex items-center mr-2 w-4 text-gray-600">
+                                                        <i class="fas fa-eye"></i>
+                                                    </span>
+                                                    <span class="text-sm">View</span>
+                                                </a>
+                                                <button @click="printConsultation(consultation.id)"
+                                                    class="group relative transition-colors duration-200 text-left inline-flex items-center w-full text-indigo-600 hover:text-indigo-800"
+                                                    title="Print prescription">
+                                                    <span class="inline-flex items-center mr-2 w-4 text-indigo-600">
+                                                        <i class="fas fa-print"></i>
+                                                    </span>
+                                                    <span class="text-sm">Print</span>
+                                                </button>
+                                            </div>
                                         </template>
 
                                         <!-- Cancel Button (for waiting and in_progress status) -->
@@ -935,6 +934,35 @@
                             console.error('Error:', error);
                             this.showToast('Failed to start consultation', 'error');
                         });
+                },
+
+                // Print prescription for completed consultation
+                async printConsultation(visitId) {
+                    try {
+                        const resp = await fetch(`/doctor/consultancy/${visitId}`, {
+                            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                        });
+                        const data = await resp.json();
+                        
+                        // Find the first diagnosis with a prescription
+                        let printUrl = null;
+                        if (data.visit && data.visit.diagnoses && data.visit.diagnoses.length > 0) {
+                            const diag = data.visit.diagnoses[0];
+                            if (diag && diag.prescriptions && diag.prescriptions.length > 0) {
+                                const prescId = diag.prescriptions[0].id;
+                                printUrl = `/print/prescription/${prescId}`;
+                            }
+                        }
+
+                        if (printUrl) {
+                            window.open(printUrl, '_blank');
+                        } else {
+                            this.showToast('No prescription found for this consultation.', 'info');
+                        }
+                    } catch (e) {
+                        console.error('Error opening print:', e);
+                        this.showToast('Could not fetch prescription data.', 'error');
+                    }
                 },
 
                 // Helper methods

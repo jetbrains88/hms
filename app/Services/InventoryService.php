@@ -185,7 +185,7 @@ class InventoryService
      */
     public function checkAndCreateAlerts(Medicine $medicine): void
     {
-        $branchId = session('current_branch_id');
+        $branchId = session('current_branch_id') ?? auth()->user()->current_branch_id ?? $medicine->branch_id;
         
         foreach ($medicine->batches as $batch) {
             // Check for expiring soon (30 days)

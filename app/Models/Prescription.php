@@ -24,7 +24,10 @@ class Prescription extends Model
         'prescribed_by',
         'dosage',
         'frequency',
-        'duration',
+        'morning',
+        'evening',
+        'night',
+        'days',
         'quantity',
         'status',
         'instructions'
@@ -33,6 +36,9 @@ class Prescription extends Model
     protected $casts = [
         'status' => 'string',
         'frequency' => 'integer',
+        'morning' => 'integer',
+        'evening' => 'integer',
+        'night' => 'integer',
         'quantity' => 'integer',
     ];
 

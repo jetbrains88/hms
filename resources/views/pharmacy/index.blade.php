@@ -1,4 +1,3 @@
-{{-- resources/views/pharmacy/prescriptions/index.blade.php --}}
 @extends('layouts.app')
 
 @section('title', 'Pending Prescriptions')

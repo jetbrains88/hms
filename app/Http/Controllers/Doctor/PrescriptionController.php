@@ -57,17 +57,29 @@ class PrescriptionController extends Controller
             'diagnosis_id' => 'required|exists:diagnoses,id',
             'medicine_id' => 'required|exists:medicines,id',
             'dosage' => 'required|string|max:100',
-            'frequency' => 'required|string|max:100', // Changed from integer to string
-            'duration' => 'required|string|max:50',
+            'frequency' => 'nullable|integer',
+            'morning' => 'nullable|integer|min:0',
+            'evening' => 'nullable|integer|min:0',
+            'night' => 'nullable|integer|min:0',
+            'days' => 'required|string|max:50',
             'quantity' => 'required|integer|min:1',
             'instructions' => 'nullable|string|max:500',
             'refills_allowed' => 'nullable|integer|min:0',
         ]);
 
+        $branchId = session('current_branch_id') ?? auth()->user()->current_branch_id;
+
+        if (!$branchId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Active branch not found for user.'
+            ], 422);
+        }
+
         $prescription = $this->prescriptionService->createPrescription(
             $validated,
             auth()->id(),
-            session('current_branch_id')
+            $branchId
         );
 
         if ($request->expectsJson()) {

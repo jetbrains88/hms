@@ -139,44 +139,113 @@ class ConsultationController extends Controller
     }
 
     /**
-     * Show consultation form for a visit
+     * Show consultation form for a visit.
+     * Scoped to the authenticated doctor's branch (multi-tenant).
      */
-    public function show(Visit $visit)
+    public function show(Request $request, Visit $visit)
     {
-        // Use Policy or manual check
+        // Authorization: visit must belong to current doctor
         if ($visit->doctor_id !== auth()->id()) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
             abort(403);
         }
-        
+
+        // Multi-tenant branch scoping: visit must belong to the doctor's active branch
+        $branchId = session('current_branch_id') ?? auth()->user()->current_branch_id;
+        if ($branchId && (int) $visit->branch_id !== (int) $branchId) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Visit does not belong to your current branch'], 403);
+            }
+            abort(403, 'Visit does not belong to your current branch.');
+        }
+
+        // Eager-load all required relations including lab orders
         $visit->load([
             'patient',
             'latestVital',
             'diagnoses' => function ($query) {
-                $query->with('prescriptions')->latest();
-            }
+                $query->with(['prescriptions.medicine'])->latest();
+            },
+            'labOrders' => function ($query) {
+                $query->with(['items.labTestType'])->latest();
+            },
         ]);
-        
-        // Mark visit as in_progress if it's waiting
+
+        // Auto-start visit if it is still in waiting status
         if ($visit->status === 'waiting') {
             $this->visitService->updateStatus($visit, 'in_progress');
         }
 
-        $medicines = Medicine::active()->get();
-        $labTestTypes = LabTestType::orderBy('name')->get();
-        
-        return view('doctor.consultations.show', compact('visit', 'medicines', 'labTestTypes'));
+        $medicines     = Medicine::active()->get();
+        $labTestTypes  = LabTestType::orderBy('name')->get();
+
+        $waitingQueue = Visit::with(['patient', 'latestVital'])
+            ->where('doctor_id', auth()->id())
+            ->where('status', 'waiting')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $inProgressQueue = Visit::with(['patient', 'latestVital'])
+            ->where('doctor_id', auth()->id())
+            ->where('status', 'in_progress')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success'          => true,
+                'visit'            => $visit,       // includes diagnoses.prescriptions.medicine + labOrders.items.labTestType
+                'waitingQueue'     => $waitingQueue,
+                'inProgressQueue'  => $inProgressQueue,
+            ]);
+        }
+
+        return view('doctor.consultations.show', compact('visit', 'medicines', 'labTestTypes', 'waitingQueue', 'inProgressQueue'));
     }
 
     /**
      * Complete consultation
      */
-    public function complete(Visit $visit)
+    public function complete(Request $request, Visit $visit)
     {
         if ($visit->doctor_id !== auth()->id()) {
             abort(403);
         }
         
         $this->visitService->updateStatus($visit, 'completed');
+        
+        if ($request->wantsJson()) {
+            // Check if there are prescriptions to print
+            $prescription = \App\Models\Prescription::whereHas('diagnosis', function($q) use ($visit) {
+                $q->where('visit_id', $visit->id);
+            })->first();
+
+            $printUrl = null;
+            if ($prescription) {
+                $printUrl = route('print.prescription', $prescription->id);
+            }
+
+            // Dispatch notification to Pharmacy
+            $branchId = $visit->branch_id;
+            $pharmacists = \App\Models\User::whereHas('roles.permissions', function ($q) {
+                $q->where('name', 'dispense_medicine');
+            })->whereHas('branches', function ($q) use ($branchId) {
+                $q->where('branches.id', $branchId);
+            })->get();
+            
+            $notificationService = app(\App\Services\NotificationService::class);
+            foreach ($pharmacists as $pharmacist) {
+                $notificationService->visitCompleted($pharmacist, $visit);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Consultation completed successfully',
+                'print_url' => $printUrl
+            ]);
+        }
         
         return redirect()
             ->route('doctor.consultancy')
@@ -190,13 +259,27 @@ class ConsultationController extends Controller
     {
         $patient = \App\Models\Patient::findOrFail($patientId);
         
-        // Fetch some basic stats
-        $totalVisits = $patient->visits()->count();
-        $totalPrescriptions = \App\Models\Prescription::whereHas('diagnosis', function($q) use ($patientId) {
-            $q->whereHas('visit', function($v) use ($patientId) {
-                $v->where('patient_id', $patientId);
-            });
-        })->count();
+        // Fetch visits with main diagnosis
+        $visits = \App\Models\Visit::where('patient_id', $patientId)
+            ->with(['diagnoses' => function($q) {
+                $q->latest()->limit(1); // Get the primary/latest diagnosis
+            }])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Fetch all prescriptions across visits using relation
+        $prescriptions = \App\Models\Prescription::whereHas('diagnosis.visit', function($q) use ($patientId) {
+                $q->where('patient_id', $patientId);
+            })
+            ->with('medicine')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Fetch all lab orders
+        $labs = \App\Models\LabOrder::where('patient_id', $patientId)
+            ->with(['items.labTestType', 'items.labResults'])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return response()->json([
             'success' => true,
@@ -205,10 +288,9 @@ class ConsultationController extends Controller
                     'chronic_conditions' => $patient->chronic_conditions,
                     'allergies' => $patient->allergies,
                 ],
-                'statistics' => [
-                    'total_visits' => $totalVisits,
-                    'total_prescriptions' => $totalPrescriptions,
-                ]
+                'visits' => $visits,
+                'prescriptions' => $prescriptions,
+                'labs' => $labs
             ]
         ]);
     }
@@ -221,17 +303,39 @@ class ConsultationController extends Controller
         $validated = $request->validate([
             'visit_id' => 'required|exists:visits,id',
             'patient_id' => 'required|exists:patients,id',
-            'temperature' => 'nullable|numeric',
-            'pulse' => 'nullable|integer',
-            'blood_pressure_systolic' => 'nullable|integer',
-            'blood_pressure_diastolic' => 'nullable|integer',
-            'respiratory_rate' => 'nullable|integer',
-            'oxygen_saturation' => 'nullable|numeric',
+            'temperature' => 'nullable|numeric|between:95,110',
+            'pulse' => 'nullable|integer|between:20,300',
+            'blood_pressure_systolic' => 'nullable|integer|between:40,300',
+            'blood_pressure_diastolic' => 'nullable|integer|between:30,200',
+            'respiratory_rate' => 'nullable|integer|between:5,100',
+            'oxygen_saturation' => 'nullable|numeric|between:0,100',
+            'oxygen_device' => 'nullable|string|max:255',
+            'oxygen_flow_rate' => 'nullable|numeric|between:0,15',
+            'pain_scale' => 'nullable|integer|between:0,10',
+            'height' => 'nullable|numeric|between:30,250',
+            'weight' => 'nullable|numeric|between:1,300',
+            'bmi' => 'nullable|numeric',
+            'blood_glucose' => 'nullable|numeric',
+            'heart_rate' => 'nullable|integer',
             'notes' => 'nullable|string',
         ]);
 
-        $vital = \App\Models\Vital::create($validated + [
+        // Remove null values so DB defaults are used correctly (e.g. pain_scale = 0)
+        $attributes = array_filter($validated, fn($val) => !is_null($val));
+        
+        $branchId = session('current_branch_id') ?? auth()->user()->current_branch_id;
+        
+        if (!$branchId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Active branch not found for user.'
+            ], 422);
+        }
+
+        $vital = \App\Models\Vital::create($attributes + [
             'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'branch_id' => $branchId,
+            'recorded_by' => auth()->id(),
         ]);
 
         return response()->json([

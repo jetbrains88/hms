@@ -79,7 +79,7 @@
             @endforeach
             
             <div class="flex justify-end gap-3 mt-6">
-                <a href="{{ route('lab.orders.show', $orderItem->labOrder_id) }}" 
+                <a href="{{ route('lab.orders.show', $orderItem->lab_order_id) }}" 
                    class="px-6 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50">
                     Cancel
                 </a>

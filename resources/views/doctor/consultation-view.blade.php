@@ -1038,7 +1038,7 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Completing...';
             btn.disabled = true;
 
-            fetch(`/doctor/consultation/{{ $visit->id }}/complete`, {
+            fetch(`/doctor/consultancy/{{ $visit->id }}/complete`, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),

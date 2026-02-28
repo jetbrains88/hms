@@ -8,16 +8,25 @@ use App\Http\Requests\Lab\VerifyOrderRequest;
 use App\Models\LabOrder;
 use App\Models\Patient;
 use App\Models\Visit;
+use App\Interfaces\LabReportRepositoryInterface;
 use App\Services\LabService;
+use App\Services\Laboratory\LabReportService;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
     protected $labService;
+    protected $labReportRepository;
+    protected $labReportService;
 
-    public function __construct(LabService $labService)
-    {
+    public function __construct(
+        LabService $labService,
+        LabReportRepositoryInterface $labReportRepository,
+        LabReportService $labReportService
+    ) {
         $this->labService = $labService;
+        $this->labReportRepository = $labReportRepository;
+        $this->labReportService = $labReportService;
     }
 
     /**
@@ -79,7 +88,11 @@ class OrderController extends Controller
             ->orderBy('name')
             ->get();
         
-        return view('lab.orders.create', compact('patient', 'visit', 'testTypes'));
+        $doctors = $this->labReportRepository->getAllDoctors();
+        $technicians = $this->labReportRepository->getAllTechnicians();
+        $predefinedTests = $this->labReportService->getPredefinedTests();
+        
+        return view('lab.orders.create', compact('patient', 'visit', 'testTypes', 'doctors', 'technicians', 'predefinedTests'));
     }
 
     /**
@@ -93,6 +106,14 @@ class OrderController extends Controller
             auth()->user()->current_branch_id
         );
         
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Lab order created successfully. Order #: ' . $labOrder->lab_number,
+                'redirect' => route('lab.orders.show', $labOrder)
+            ]);
+        }
+
         return redirect()
             ->route('lab.orders.show', $labOrder)
             ->with('success', 'Lab order created successfully. Order #: ' . $labOrder->lab_number);
@@ -101,37 +122,42 @@ class OrderController extends Controller
     /**
      * Show lab order details
      */
-    public function show(LabOrder $labOrder)
+    public function show(LabOrder $order)
     {
-        $labOrder->load([
+        $order->load([
             'patient',
             'doctor',
+            'verifiedBy',
             'items' => function ($q) {
                 $q->with(['labTestType.parameters', 'labResults', 'technician']);
             }
         ]);
         
-        return view('lab.orders.show', compact('labOrder'));
+        return view('lab.orders.show', ['labOrder' => $order]);
     }
 
     /**
      * Start processing an order item
      */
-    public function startItem(LabOrderItem $item)
+    public function startItem(\Illuminate\Http\Request $request, LabOrderItem $item)
     {
         $item->update([
             'status' => 'processing',
             'technician_id' => auth()->id(),
         ]);
         
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Started processing test: ' . $item->labTestType->name
+            ]);
+        }
+        
         return redirect()
             ->back()
             ->with('success', 'Started processing test: ' . $item->labTestType->name);
     }
 
-    /**
-     * Verify lab order
-     */
     public function verify(VerifyOrderRequest $request, LabOrder $labOrder)
     {
         try {
@@ -149,6 +175,69 @@ class OrderController extends Controller
     }
 
     /**
+     * Show edit form for lab order
+     */
+    public function edit(LabOrder $order)
+    {
+        $order->load(['patient', 'items.labTestType']);
+        
+        $testTypes = \App\Models\LabTestType::with('parameters')
+            ->orderBy('name')
+            ->get();
+            
+        $doctors = $this->labReportRepository->getAllDoctors();
+        $technicians = $this->labReportRepository->getAllTechnicians();
+        $predefinedTests = $this->labReportService->getPredefinedTests();
+        
+        return view('lab.orders.edit', ['labOrder' => $order, 'testTypes' => $testTypes, 'doctors' => $doctors, 'technicians' => $technicians, 'predefinedTests' => $predefinedTests]);
+    }
+
+    /**
+     * Update lab order
+     */
+    public function update(Request $request, LabOrder $order)
+    {
+        // Simple update logic for now, can be expanded
+        $order->update($request->only([
+        'priority', 'device_name', 'comments', 'reporting_date',
+        'lab_test_type_id', 'doctor_id', 'lab_number', 'status'
+    ]));
+        
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Lab order updated successfully',
+                'redirect' => route('lab.orders.show', $order)
+            ]);
+        }
+
+        return redirect()
+            ->route('lab.orders.show', $order)
+            ->with('success', 'Lab order updated successfully');
+    }
+
+    /**
+     * Delete lab order
+     */
+    public function destroy(LabOrder $order)
+    {
+        $order->delete();
+        
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Lab order deleted successfully',
+                'redirect' => route('lab.orders.index')
+            ]);
+        }
+
+        return redirect()
+            ->route('lab.orders.index')
+            ->with('success', 'Lab order deleted successfully');
+    }
+
+
+    /**
      * Print lab report
      */
     public function print(LabOrder $labOrder)
@@ -162,6 +251,40 @@ class OrderController extends Controller
             }
         ]);
         
-        return view('lab.orders.print', compact('labOrder'));
+        return view('lab.reports.print', ['labOrder' => $labOrder]);
+    }
+
+    /**
+     * Get pending items for AJAX dashboard
+     */
+    public function pending()
+    {
+        $branchId = auth()->user()->current_branch_id;
+        
+        $pendingItems = \App\Models\LabOrderItem::with(['labOrder.patient', 'labOrder.doctor', 'labTestType'])
+            ->whereHas('labOrder', function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId);
+            })
+            ->whereIn('status', ['pending', 'processing'])
+            ->latest()
+            ->take(15)
+            ->get()
+            ->map(function($item) {
+                return [
+                    'id' => $item->id,
+                    'test_name' => collect([$item->labTestType->name])->implode(', '),
+                    'patient' => [
+                        'name' => $item->labOrder->patient->name ?? 'N/A'
+                    ],
+                    'doctor' => [
+                        'name' => $item->labOrder->doctor->name ?? 'N/A'
+                    ]
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $pendingItems
+        ]);
     }
 }

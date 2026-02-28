@@ -1025,7 +1025,7 @@
                     }
                 } catch (error) {
                     console.error('Error loading zones:', error);
-                    this.showToast('Error loading zones', 'error');
+                    window.showNotification('Error loading zones', 'error');
                 }
             },
 
@@ -1054,7 +1054,7 @@
                     }
                 } catch (error) {
                     console.error('Error loading sectors:', error);
-                    this.showToast('Error loading sectors', 'error');
+                    window.showNotification('Error loading sectors', 'error');
                 }
             },
 
@@ -1081,7 +1081,7 @@
                     }
                 } catch (error) {
                     console.error('Error loading PLHQs:', error);
-                    this.showToast('Error loading PLHQs', 'error');
+                    window.showNotification('Error loading PLHQs', 'error');
                 }
             },
 
@@ -1107,7 +1107,7 @@
                     }
                 } catch (error) {
                     console.error('Error loading beats:', error);
-                    this.showToast('Error loading beats', 'error');
+                    window.showNotification('Error loading beats', 'error');
                 }
             },
 
@@ -1119,16 +1119,11 @@
                 }
 
                 try {
-                    const response = await fetch('{{ route("reception.quick-search") }}', {
-                        method: 'POST',
+                    const response = await fetch(`{{ route("reception.quick-search") }}?search=${encodeURIComponent(this.searchQuery)}`, {
+                        method: 'GET',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
                             'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            search: this.searchQuery
-                        })
+                        }
                     });
 
                     if (response.ok) {
@@ -1137,7 +1132,7 @@
                 } catch (error) {
                     console.error('Search error:', error);
                     this.searchResults = [];
-                    this.showToast('Search service unavailable', 'error');
+                    window.showNotification('Search service unavailable', 'error');
                 }
             },
 
@@ -1161,7 +1156,7 @@
                     cnic: '',
                     id: ''
                 };
-                this.showToast('Patient selection cleared', 'info');
+                window.showNotification('Patient selection cleared', 'info');
             },
 
             // Patient modal
@@ -1199,7 +1194,7 @@
                 } catch (error) {
                     console.error('Error loading patient data:', error);
                     showError(error, 'Error!')
-                    this.showToast('Error loading patient data', 'error');
+                    window.showNotification('Error loading patient data', 'error');
                 }
             },
 
@@ -1229,7 +1224,7 @@
                     if (response.ok) {
                         const data = await response.json();
                         if (data.success) {
-                            this.showToast('Patient updated successfully!', 'success');
+                            window.showNotification('Patient updated successfully!', 'success');
                             this.showPatientModal = false;
                             
                             // Reload both lists to show updated state
@@ -1239,12 +1234,12 @@
                                 await this.loadWaitingPatients();
                             }
                         } else {
-                            this.showToast(data.message || 'Error updating patient', 'error');
+                            window.showNotification(data.message || 'Error updating patient', 'error');
                         }
                     }
                 } catch (error) {
                     console.error('Update error:', error);
-                    this.showToast('Network error', 'error');
+                    window.showNotification('Network error', 'error');
                 } finally {
                     this.isUpdating = false;
                 }
@@ -1295,7 +1290,7 @@
                     if (response.ok) {
                         const result = await response.json();
                         if (result.success) {
-                            this.showToast(result.message || 'Patient registered successfully!', 'success');
+                            window.showNotification(result.message || 'Patient registered successfully!', 'success');
                             this.resetNewPatientForm();
 
                             setTimeout(() => {
@@ -1304,16 +1299,16 @@
                         } else {
                             if (result.errors) {
                                 Object.keys(result.errors).forEach(field => {
-                                    this.showToast(result.errors[field][0], 'error');
+                                    window.showNotification(result.errors[field][0], 'error');
                                 });
                             } else {
-                                this.showToast(result.message || 'An error occurred', 'error');
+                                window.showNotification(result.message || 'An error occurred', 'error');
                             }
                         }
                     }
                 } catch (error) {
                     console.error('Form submission error:', error);
-                    this.showToast('Network error', 'error');
+                    window.showNotification('Network error', 'error');
                 } finally {
                     this.isSubmitting = false;
                 }
@@ -1422,7 +1417,7 @@
                 this.newPatient.parent_id = staff.id;
                 this.staffSearchQuery = staff.name;
                 this.staffSearchResults = [];
-                this.showToast(`Selected staff: ${staff.name}`, 'info');
+                window.showNotification(`Selected staff: ${staff.name}`, 'info');
             },
 
             // Patient lists
@@ -1444,13 +1439,6 @@
                 } catch (error) {
                     console.error('Error loading in-progress patients:', error);
                 }
-            },
-
-            // Helper function to show toast notifications
-            showToast(message, type = 'info') {
-                // You can implement a toast notification system here
-                // For now, using browser alerts
-                alert(message);
             }
         };
     }

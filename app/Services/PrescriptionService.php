@@ -30,8 +30,11 @@ class PrescriptionService
             'medicine_id' => $data['medicine_id'],
             'prescribed_by' => $doctorId,
             'dosage' => $data['dosage'],
-            'frequency' => $data['frequency'],
-            'duration' => $data['duration'],
+            'frequency' => ($data['morning'] ?? 0) + ($data['evening'] ?? 0) + ($data['night'] ?? 0),
+            'morning' => $data['morning'] ?? 0,
+            'evening' => $data['evening'] ?? 0,
+            'night' => $data['night'] ?? 0,
+            'days' => $data['days'],
             'quantity' => $data['quantity'],
             'status' => 'pending',
             'instructions' => $data['instructions'] ?? null,
@@ -60,7 +63,18 @@ class PrescriptionService
             }
             
             // Find suitable batch
-            $batch = $this->findSuitableBatch($prescription->medicine_id, $prescription->branch_id, $quantityToDispense);
+            $batch = null;
+            if (!empty($data['batch_number'])) {
+                $batch = MedicineBatch::where('batch_number', $data['batch_number'])
+                    ->where('medicine_id', $prescription->medicine_id)
+                    ->where('branch_id', $prescription->branch_id)
+                    ->where('remaining_quantity', '>=', $quantityToDispense)
+                    ->first();
+            }
+            
+            if (!$batch) {
+                $batch = $this->findSuitableBatch($prescription->medicine_id, $prescription->branch_id, $quantityToDispense);
+            }
             
             if (!$batch) {
                 throw new \InvalidArgumentException('Insufficient stock available');
@@ -147,7 +161,7 @@ class PrescriptionService
      */
     public function getPendingPrescriptions(int $branchId)
     {
-        return Prescription::with(['patient', 'medicine', 'prescribedBy'])
+        return Prescription::with(['diagnosis.visit.patient', 'medicine', 'prescribedBy'])
             ->where('branch_id', $branchId)
             ->whereIn('status', ['pending', 'partially_dispensed'])
             ->orderBy('created_at', 'asc')

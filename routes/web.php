@@ -83,7 +83,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::get('/unread-count', [NotificationController::class, 'getUnreadCount'])
             ->name('unread-count');
-        Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])
+        Route::post('/{notification}/read', [NotificationController::class, 'markAsRead'])
             ->name('mark-as-read');
         Route::post('/mark-all-read', [NotificationController::class, 'markAllRead'])
             ->name('mark-all-read');
@@ -134,6 +134,8 @@ Route::middleware(['auth'])->group(function () {
         // Patient Search (used across modules)
         Route::get('/patients/search', [ReceptionPatientController::class, 'apiSearch'])
             ->name('patients.search');
+        Route::get('/patients/{patient}/visits', [ReceptionPatientController::class, 'visitHistory'])
+            ->name('patients.visits');
 
         // Medicine Search
         Route::get('/medicines/search', [MedicineController::class, 'apiSearch'])
@@ -369,6 +371,7 @@ Route::middleware(['auth', 'role:pharmacy'])->prefix('pharmacy')->name('pharmacy
 
     // Dispense History
     Route::get('/dispense-history', [PharmacyPrescriptionController::class, 'history'])->name('dispense.history');
+    Route::get('/dispense-history/data', [PharmacyPrescriptionController::class, 'getHistoryData'])->name('dispense.history.data');
 
     // Reports
     Route::get('/reports', [PharmacyReportController::class, 'index'])->name('reports');
@@ -402,10 +405,13 @@ Route::middleware(['auth', 'role:lab'])->prefix('lab')->name('lab.')->group(func
     Route::put('/results/{orderItem}', [ResultController::class, 'update'])->name('results.update');
 
     // Reports
+    Route::get('/reports/data', [LabReportController::class, 'getReportsData'])->name('reports.data');
+    Route::get('/reports/statistics', [LabReportController::class, 'statistics'])->name('reports.statistics');
     Route::get('/reports', [LabReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/{labOrder}', [LabReportController::class, 'show'])->name('reports.show');
     Route::get('/reports/{labOrder}/pdf', [LabReportController::class, 'pdf'])->name('reports.pdf');
     Route::get('/reports/export/{type}', [LabReportController::class, 'export'])->name('reports.export');
+    Route::delete('/reports/{labOrder}', [LabReportController::class, 'destroy'])->name('reports.destroy');
 
     // AJAX endpoints
     Route::get('/pending', [LabOrderController::class, 'pending'])->name('pending');

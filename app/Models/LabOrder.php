@@ -49,6 +49,7 @@ class LabOrder extends Model
         'patient_id',
         'visit_id',
         'doctor_id',
+        'lab_test_type_id',
         'collection_date',
         'reporting_date',
         'lab_number',

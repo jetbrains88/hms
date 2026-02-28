@@ -104,7 +104,7 @@ class ReportController extends Controller
     {
         $branchId = session('current_branch_id');
 
-        $query = Prescription::with(['patient', 'medicine', 'prescribedBy', 'dispensations'])
+        $query = Prescription::with(['diagnosis.visit.patient', 'medicine', 'prescribedBy', 'dispensations'])
             ->where('branch_id', $branchId);
 
         // Apply filters
@@ -285,7 +285,7 @@ class ReportController extends Controller
      */
     protected function getPrescriptionsExportData($branchId, $request)
     {
-        $query = Prescription::with(['patient', 'medicine', 'prescribedBy'])
+        $query = Prescription::with(['diagnosis.visit.patient', 'medicine', 'prescribedBy'])
             ->where('branch_id', $branchId);
 
         if ($request->filled('date_from')) {
@@ -301,12 +301,12 @@ class ReportController extends Controller
         return $prescriptions->map(function ($p) {
             return [
                 $p->created_at->format('Y-m-d H:i'),
-                $p->patient->name,
-                $p->medicine->name,
+                $p->diagnosis->visit->patient->name ?? 'N/A',
+                $p->medicine->name ?? 'N/A',
                 $p->dosage,
                 $p->quantity,
                 $p->status,
-                $p->prescribedBy->name,
+                $p->prescribedBy->name ?? 'N/A',
             ];
         })->toArray();
     }

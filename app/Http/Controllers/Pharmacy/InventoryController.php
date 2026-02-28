@@ -204,7 +204,7 @@ class InventoryController extends Controller
                 ->where('branch_id', auth()->user()->current_branch_id)
                 ->sum('remaining_quantity');
                 
-            $stockPercentage = $medicine->reorder_level > 0 ? min(100, ($stock / ($medicine->reorder_level * 2)) * 100) : 100;
+            $stockPercentage = $medicine->reorder_level > 0 ? min(100, ($stock / max(1, ($medicine->reorder_level * 2))) * 100) : 100;
             
             return [
                 'id' => $medicine->id,

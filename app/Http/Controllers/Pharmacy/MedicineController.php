@@ -115,4 +115,31 @@ class MedicineController extends Controller
             ->route('pharmacy.medicines.show', $medicine)
             ->with('success', 'Medicine updated successfully');
     }
+
+    /**
+     * AJAX: Search medicines for typeahead/dropdowns
+     */
+    public function apiSearch(Request $request)
+    {
+        $search = $request->get('q') ?: $request->get('search');
+        
+        $query = Medicine::with(['category', 'form'])
+            ->where(function ($q) {
+                $q->where('branch_id', auth()->user()->current_branch_id)
+                  ->orWhere('is_global', true);
+            })
+            ->where('is_active', true);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('generic_name', 'LIKE', "%{$search}%")
+                  ->orWhere('brand', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $medicines = $query->limit(20)->get();
+
+        return response()->json($medicines);
+    }
 }

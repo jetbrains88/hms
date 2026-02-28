@@ -52,7 +52,7 @@ class NotificationController extends Controller
      */
     public function markAsRead(Notification $notification)
     {
-        if ($notification->user_id !== auth()->id()) {
+        if ((int) $notification->user_id !== (int) auth()->id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -84,7 +84,7 @@ class NotificationController extends Controller
      */
     public function destroy(Notification $notification)
     {
-        if ($notification->user_id !== auth()->id()) {
+        if ((int) $notification->user_id !== (int) auth()->id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 

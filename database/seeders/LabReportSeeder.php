@@ -141,7 +141,7 @@ class LabReportSeeder extends Seeder
                         'type' => 'App\\Notifications\\LabResultReady',
                         'title' => 'Lab Report Completed',
                         'body' => "Lab report for {$patient->name} ({$labOrder->lab_number}) is ready",
-                        'action_url' => "/doctor/lab-reports/{$labOrder->id}",
+                        'action_url' => "/doctor/lab-orders/{$labOrder->id}",
                         'action_text' => 'View Report',
                         'created_at' => now(),
                         'updated_at' => now(),

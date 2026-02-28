@@ -8,7 +8,9 @@ use App\Models\LabOrderItem;
 use App\Models\LabTestType;
 use App\Services\ReportService;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
@@ -25,7 +27,7 @@ class ReportController extends Controller
      */
     public function index()
     {
-        $branchId = session('current_branch_id');
+        $branchId = session('current_branch_id') ?? auth()->user()->current_branch_id;
 
         $stats = [
             'total_orders' => LabOrder::where('branch_id', $branchId)->count(),
@@ -70,6 +72,172 @@ class ReportController extends Controller
     }
 
     /**
+     * Get lab reports data for AJAX requests with pagination
+     */
+    public function getReportsData(Request $request): JsonResponse
+    {
+        try {
+            $filters = $request->only(['status', 'priority', 'patient_id', 'doctor_id', 'date_from', 'date_to', 'search', 'sort_by', 'sort_direction']);
+            $perPage = $request->get('per_page', 10);
+
+            // Build query using the correct tables with proper eager loading
+            $query = LabOrder::with([
+                'patient',
+                'doctor',
+                'items.labTestType',
+                'items.labResults',
+                'items.labResults.labTestParameter',
+                'verifiedBy'
+            ]);
+
+            // Apply branch filter safely
+            $branchId = session('current_branch_id') ?? auth()->user()->current_branch_id;
+            if ($branchId) {
+                $query->where('branch_id', $branchId);
+            }
+
+            // Apply filters
+            if (!empty($filters['status'])) {
+                $query->where('status', $filters['status']);
+            }
+
+            if (!empty($filters['priority'])) {
+                $query->where('priority', $filters['priority']);
+            }
+
+            if (!empty($filters['patient_id'])) {
+                $query->where('patient_id', $filters['patient_id']);
+            }
+
+            if (!empty($filters['doctor_id'])) {
+                $query->where('doctor_id', $filters['doctor_id']);
+            }
+
+            if (!empty($filters['date_from'])) {
+                $query->whereDate('created_at', '>=', $filters['date_from']);
+            }
+
+            if (!empty($filters['date_to'])) {
+                $query->whereDate('created_at', '<=', $filters['date_to']);
+            }
+
+            if (!empty($filters['search'])) {
+                $search = $filters['search'];
+                $query->where(function ($q) use ($search) {
+                    $q->where('lab_number', 'LIKE', "%{$search}%")
+                        ->orWhereHas('patient', function ($patientQuery) use ($search) {
+                            $patientQuery->where('name', 'LIKE', "%{$search}%")
+                                ->orWhere('emrn', 'LIKE', "%{$search}%")
+                                ->orWhere('cnic', 'LIKE', "%{$search}%");
+                        });
+                });
+            }
+
+            // Apply sorting
+            $sortField = $filters['sort_by'] ?? 'created_at';
+            $sortDirection = $filters['sort_direction'] ?? 'desc';
+            $query->orderBy($sortField, $sortDirection);
+
+            $labOrders = $query->paginate($perPage);
+
+            // Transform data to match the expected format in the frontend
+            $transformedData = $labOrders->getCollection()->map(function ($order) {
+                // Get the first test type (or combine multiple)
+                $testType = $order->items->first()?->labTestType;
+
+                return [
+                    'id' => $order->id,
+                    'lab_number' => $order->lab_number,
+                    'test_name' => $testType?->name ?? 'Multiple Tests',
+                    'test_code' => $order->lab_number,
+                    'test_type' => $testType ? [
+                        'id' => $testType->id,
+                        'name' => $testType->name,
+                        'department' => $testType->department,
+                    ] : null,
+                    'patient' => $order->patient ? [
+                        'id' => $order->patient->id,
+                        'name' => $order->patient->name,
+                        'cnic' => $order->patient->cnic,
+                        'emrn' => $order->patient->emrn,
+                    ] : null,
+                    'doctor' => $order->doctor ? [
+                        'id' => $order->doctor->id,
+                        'name' => $order->doctor->name,
+                    ] : null,
+                    'status' => $order->status,
+                    'priority' => $order->priority,
+                    'is_verified' => $order->is_verified,
+                    'verified_by' => $order->verifiedBy?->name,
+                    'verified_at' => $order->verified_at,
+                    'created_at' => $order->created_at,
+                    'reporting_date' => $order->reporting_date,
+                    'results_count' => $order->items->sum(function ($item) {
+                        return $item->labResults->count();
+                    }),
+                ];
+            });
+
+            return response()->json([
+                'data' => $transformedData,
+                'current_page' => $labOrders->currentPage(),
+                'last_page' => $labOrders->lastPage(),
+                'per_page' => $labOrders->perPage(),
+                'total' => $labOrders->total(),
+                'from' => $labOrders->firstItem(),
+                'to' => $labOrders->lastItem(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching lab reports data: ' . $e->getMessage());
+
+            return response()->json([
+                'error' => 'Failed to load lab reports',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get statistics for AJAX requests.
+     */
+    public function statistics(): JsonResponse
+    {
+        try {
+            $branchId = session('current_branch_id') ?? auth()->user()->current_branch_id;
+
+            $stats = [
+                'total' => LabOrder::where('branch_id', $branchId)->count(),
+                'pending' => LabOrder::where('branch_id', $branchId)->where('status', 'pending')->count(),
+                'processing' => LabOrder::where('branch_id', $branchId)->where('status', 'processing')->count(),
+                'completed' => LabOrder::where('branch_id', $branchId)->where('status', 'completed')->count(),
+                'urgent' => LabOrder::where('branch_id', $branchId)->where('priority', 'urgent')->count(),
+                'today' => LabOrder::where('branch_id', $branchId)->whereDate('created_at', today())->count(),
+                'verified' => LabOrder::where('branch_id', $branchId)->where('is_verified', true)->count(),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $stats
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching lab statistics: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'data' => [
+                    'total' => 0,
+                    'pending' => 0,
+                    'processing' => 0,
+                    'completed' => 0,
+                    'urgent' => 0,
+                    'today' => 0,
+                    'verified' => 0
+                ]
+            ]);
+        }
+    }
+
+    /**
      * Show lab report.
      */
     public function show(LabOrder $labOrder)
@@ -100,7 +268,7 @@ class ReportController extends Controller
             }
         ]);
 
-        $pdf = Pdf::loadView('lab.reports.pdf', compact('labOrder'));
+        $pdf = Pdf::loadView('lab.reports.print', compact('labOrder'));
 
         return $pdf->download('lab-report-' . $labOrder->lab_number . '.pdf');
     }
@@ -246,5 +414,23 @@ class ReportController extends Controller
         }
 
         return $data;
+    }
+    /**
+     * Remove the specified lab report (order).
+     */
+    public function destroy(LabOrder $labOrder)
+    {
+        try {
+            $labOrder->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Report deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting report: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

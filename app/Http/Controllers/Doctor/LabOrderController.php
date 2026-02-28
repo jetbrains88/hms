@@ -72,13 +72,34 @@ class LabOrderController extends Controller
             'comments' => 'nullable|string|max:500',
         ]);
 
+        $branchId = session('current_branch_id') ?? auth()->user()->current_branch_id;
+
+        if (!$branchId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Active branch not found for user.'
+            ], 422);
+        }
+
         $labOrder = $this->labService->createLabOrder(
             $validated,
             auth()->id(),
-            session('current_branch_id')
+            $branchId
         );
 
         if ($request->expectsJson()) {
+            // Dispatch notification
+            $technicians = \App\Models\User::whereHas('roles.permissions', function ($q) {
+                $q->where('name', 'manage_lab');
+            })->whereHas('branches', function ($q) use ($branchId) {
+                $q->where('branches.id', $branchId);
+            })->get();
+            
+            $notificationService = app(\App\Services\NotificationService::class);
+            foreach ($technicians as $tech) {
+                $notificationService->newLabOrder($tech, $labOrder);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Lab order created successfully',

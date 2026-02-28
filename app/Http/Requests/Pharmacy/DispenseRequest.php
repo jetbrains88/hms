@@ -16,6 +16,7 @@ class DispenseRequest extends FormRequest
         return [
             'quantity' => 'nullable|integer|min:1',
             'notes' => 'nullable|string|max:500',
+            'batch_number' => 'nullable|string',
         ];
     }
 }

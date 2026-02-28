@@ -182,7 +182,7 @@
             </div>
 
             <!-- Inventory History -->
-            @if($inventoryLogs->isNotEmpty())
+            @if(isset($inventoryLogs) && $inventoryLogs->isNotEmpty())
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
                     <i class="fas fa-history mr-2 text-purple-500"></i>Recent Inventory Activity

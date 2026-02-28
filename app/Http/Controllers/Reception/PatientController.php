@@ -288,7 +288,7 @@ class PatientController extends Controller
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('opd_number', 'like', "%{$search}%")
+                  ->orWhere('emrn', 'like', "%{$search}%")
                   ->orWhere('phone', 'like', "%{$search}%")
                   ->orWhere('cnic', 'like', "%{$search}%");
             });
@@ -347,7 +347,6 @@ class PatientController extends Controller
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('opd_number', 'like', "%{$search}%")
                   ->orWhere('emrn', 'like', "%{$search}%")
                   ->orWhere('phone', 'like', "%{$search}%")
                   ->orWhere('cnic', 'like', "%{$search}%");
@@ -375,12 +374,36 @@ class PatientController extends Controller
             $query->whereDate('created_at', '<=', $request->end_date);
         }
 
-        $sortField = in_array($request->get('sort_by'), ['name', 'opd_number', 'created_at', 'phone'])
+        $sortField = in_array($request->get('sort_by'), ['name', 'created_at', 'phone'])
             ? $request->get('sort_by') : 'created_at';
         $sortDir = $request->get('sort_order') === 'asc' ? 'asc' : 'desc';
 
         $patients = $query->orderBy($sortField, $sortDir)
             ->paginate($request->get('per_page', 15));
+
+        return response()->json($patients);
+    }
+
+    /**
+     * AJAX: Search patients for typeahead/dropdowns
+     */
+    public function apiSearch(Request $request)
+    {
+        $search = $request->get('q') ?: $request->get('search');
+        
+        $query = Patient::where('branch_id', auth()->user()->current_branch_id);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('emrn', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        $patients = $query->latest()
+            ->limit(20)
+            ->get(['id', 'name', 'emrn', 'phone', 'gender']);
 
         return response()->json($patients);
     }

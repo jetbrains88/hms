@@ -12,7 +12,7 @@
                     <p class="text-gray-600 mt-2">Fill in the details to create a new laboratory report</p>
                 </div>
                 <div>
-                    <a href="{{ route('lab.reports.index') }}"
+                    <a href="{{ route('lab.orders.index') }}"
                         class="bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-shadow duration-300">
                         <i class="fas fa-arrow-left mr-2"></i>Back to List
                     </a>
@@ -612,7 +612,9 @@
                             headers: { 'Accept': 'application/json' }
                         });
                         const data = await response.json();
-                        if (data.success) {
+                        if (Array.isArray(data)) {
+                            this.patientResults = data;
+                        } else if (data.success) {
                             this.patientResults = data.data;
                         }
                     } catch (error) {
@@ -634,7 +636,7 @@
                         });
                         const data = await response.json();
                         if (data.success) {
-                            this.patientVisits = data.data;
+                            this.patientVisits = data.visits || data.data || [];
                         }
                     } catch (error) {
                         console.error('Error fetching patient visits:', error);
@@ -713,14 +715,22 @@
                     this.isSubmitting = true;
 
                     try {
-                        const response = await fetch('{{ route("lab.reports.store") }}', {
+                        const payload = {
+                            patient_id: this.form.patient_id,
+                            visit_id: this.form.visit_id,
+                            test_type_ids: [this.form.lab_test_type_id],
+                            priority: this.form.priority,
+                            comments: this.form.notes,
+                        };
+
+                        const response = await fetch('{{ route("lab.orders.store") }}', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                                 'Accept': 'application/json'
                             },
-                            body: JSON.stringify(this.form)
+                            body: JSON.stringify(payload)
                         });
 
                         const data = await response.json();

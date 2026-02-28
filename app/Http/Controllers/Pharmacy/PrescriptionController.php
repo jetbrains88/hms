@@ -25,7 +25,7 @@ class PrescriptionController extends Controller
     {
         $branchId = auth()->user()->current_branch_id;
         
-        $query = Prescription::with(['patient', 'medicine', 'prescribedBy'])
+        $query = Prescription::with(['diagnosis.visit.patient', 'medicine.batches', 'prescribedBy'])
             ->where('branch_id', $branchId);
         
         if ($request->has('status')) {
@@ -36,7 +36,7 @@ class PrescriptionController extends Controller
         
         if ($request->has('search')) {
             $search = $request->search;
-            $query->whereHas('patient', function ($q) use ($search) {
+            $query->whereHas('diagnosis.visit.patient', function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
                   ->orWhere('emrn', 'LIKE', "%{$search}%");
             });
@@ -55,7 +55,7 @@ class PrescriptionController extends Controller
     public function show(Prescription $prescription)
     {
         $prescription->load([
-            'patient',
+            'diagnosis.visit.patient',
             'medicine',
             'prescribedBy',
             'dispensations' => function ($q) {
@@ -95,26 +95,66 @@ class PrescriptionController extends Controller
     public function history(Request $request)
     {
         $branchId = auth()->user()->current_branch_id;
+        
+        $stats = [
+            'total_dispensed' => PrescriptionDispensation::whereHas('prescription', function($q) use ($branchId) {
+                $q->where('branch_id', $branchId);
+            })->count(),
+            'today_dispensed' => PrescriptionDispensation::whereHas('prescription', function($q) use ($branchId) {
+                $q->where('branch_id', $branchId);
+            })->whereDate('dispensed_at', today())->count(),
+            'total_quantity' => PrescriptionDispensation::whereHas('prescription', function($q) use ($branchId) {
+                $q->where('branch_id', $branchId);
+            })->sum('quantity_dispensed'),
+        ];
 
-        $query = Prescription::with(['patient', 'medicine', 'prescribedBy'])
-            ->where('branch_id', $branchId)
-            ->where('status', 'completed');
+        return view('pharmacy.prescriptions.history', compact('stats'));
+    }
 
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->whereHas('patient', function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('emrn', 'LIKE', "%{$search}%");
+    /**
+     * Get history data for AJAX
+     */
+    public function getHistoryData(Request $request)
+    {
+        $branchId = auth()->user()->current_branch_id;
+        
+        $query = PrescriptionDispensation::with([
+            'prescription.diagnosis.visit.patient',
+            'prescription.medicine',
+            'dispensedBy',
+            'medicineBatch'
+        ])->whereHas('prescription', function($q) use ($branchId) {
+            $q->where('branch_id', $branchId);
+        });
+
+        // Search
+        if ($search = $request->get('search')) {
+            $query->where(function($q) use ($search) {
+                $q->whereHas('prescription.diagnosis.visit.patient', function($pq) use ($search) {
+                    $pq->where('name', 'LIKE', "%{$search}%")
+                      ->orWhere('emrn', 'LIKE', "%{$search}%");
+                })->orWhereHas('prescription.medicine', function($mq) use ($search) {
+                    $mq->where('name', 'LIKE', "%{$search}%");
+                })->orWhereHas('medicineBatch', function($bq) use ($search) {
+                    $bq->where('batch_number', 'LIKE', "%{$search}%");
+                });
             });
         }
 
-        $prescriptions = $query->latest('updated_at')->paginate(15);
+        // Filters
+        if ($request->filled('date_from')) {
+            $query->whereDate('dispensed_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('dispensed_at', '<=', $request->date_to);
+        }
+        if ($request->filled('dispenser_id')) {
+            $query->where('dispensed_by', $request->dispenser_id);
+        }
 
-        return view('pharmacy.prescriptions.index', [
-            'prescriptions' => $prescriptions,
-            'title' => 'Dispense History',
-            'isHistory' => true
-        ]);
+        $dispensations = $query->latest('dispensed_at')->paginate($request->get('per_page', 10));
+
+        return response()->json($dispensations);
     }
 
     /**

@@ -34,7 +34,7 @@ class ResultController extends Controller
             ->get()
             ->keyBy('lab_test_parameter_id');
         
-        return view('lab.results.create', compact('orderItem', 'existingResults'));
+        return view('lab.orders.results.create', compact('orderItem', 'existingResults'));
     }
 
     /**
@@ -69,7 +69,7 @@ class ResultController extends Controller
         $existingResults = $orderItem->labResults
             ->keyBy('lab_test_parameter_id');
         
-        return view('lab.results.edit', compact('orderItem', 'existingResults'));
+        return view('lab.orders.results.create', compact('orderItem', 'existingResults'));
     }
 
     /**
