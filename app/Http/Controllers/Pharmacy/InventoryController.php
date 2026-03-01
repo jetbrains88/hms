@@ -46,14 +46,21 @@ class InventoryController extends Controller
     /**
      * Show add stock form
      */
-    public function create()
+    public function create(Request $request)
     {
+        $selectedMedicine = null;
+        if ($request->has('medicine_id')) {
+            $selectedMedicine = Medicine::find($request->medicine_id);
+        }
+
         $medicines = Medicine::where(function ($q) {
             $q->where('branch_id', auth()->user()->current_branch_id)
               ->orWhere('is_global', true);
-        })->get();
+        })->orderBy('name')->get();
+
+        $categories = MedicineCategory::where('is_active', true)->orderBy('name')->get();
         
-        return view('pharmacy.inventory.create', compact('medicines'));
+        return view('pharmacy.inventory.create', compact('medicines', 'categories', 'selectedMedicine'));
     }
 
     /**
@@ -163,89 +170,136 @@ class InventoryController extends Controller
             ->with('success', "Stock adjusted to {$request->new_quantity} units");
     }
 
+
     /**
      * Get inventory list for AJAX
      */
     public function inventoryList(Request $request)
     {
         $branchId = auth()->user()->current_branch_id;
-        $query = Medicine::where('branch_id', $branchId)
-            ->orWhere('is_global', true)
-            ->with(['category']);
-            
-        // Get total stock and reorder logic
-        // This is a bit simplified for now, usually you'd join with medicine_batches
         
+        $query = MedicineBatch::with(['medicine.category', 'medicine.form'])
+            ->where('medicine_batches.branch_id', $branchId);
+            
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->whereHas('medicine', function($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
                   ->orWhere('code', 'LIKE', "%{$search}%")
                   ->orWhere('brand', 'LIKE', "%{$search}%");
-            });
+            })->orWhere('batch_number', 'LIKE', "%{$search}%");
         }
         
         if ($request->filled('category') && $request->category !== 'All') {
-            $query->where('category_id', $request->category);
+            $query->whereHas('medicine', function($q) use ($request) {
+                $q->where('category_id', $request->category);
+            });
+        }
+        
+        if ($request->filled('stock_status') && $request->stock_status !== 'All') {
+            if ($request->stock_status === 'low') {
+                $query->whereHas('medicine', function($q) {
+                    $q->whereColumn('medicine_batches.remaining_quantity', '<=', 'medicines.reorder_level');
+                });
+            } elseif ($request->stock_status === 'out') {
+                $query->where('medicine_batches.remaining_quantity', '<=', 0);
+            }
         }
         
         // Sorting
-        $sortBy = $request->get('sort_by', 'name');
+        $sortBy = $request->get('sort_by', 'expiry_date');
+        $sortDirection = $request->get('sort_direction', 'asc');
+        
         if ($sortBy === 'name') {
-            $query->orderBy('name', $request->get('sort_direction', 'asc'));
+            $query->join('medicines', 'medicine_batches.medicine_id', '=', 'medicines.id')
+                ->orderBy('medicines.name', $sortDirection)
+                ->select('medicine_batches.*');
+        } elseif ($sortBy === 'stock') {
+            $query->orderBy('medicine_batches.remaining_quantity', $sortDirection);
+        } else {
+            $query->orderBy('medicine_batches.' . $sortBy, $sortDirection);
         }
         
         $length = $request->get('length', 16);
-        $medicines = ($length === 'All') ? $query->get() : $query->paginate($length);
+        $batches = ($length === 'All') ? $query->get() : $query->paginate($length === 'All' ? 1000 : (int)$length);
         
         // Map data for Alpine.js
-        $data = collect($medicines instanceof \Illuminate\Pagination\LengthAwarePaginator ? $medicines->items() : $medicines)->map(function($medicine) {
-            $stock = MedicineBatch::where('medicine_id', $medicine->id)
-                ->where('branch_id', auth()->user()->current_branch_id)
-                ->sum('remaining_quantity');
-                
-            $stockPercentage = $medicine->reorder_level > 0 ? min(100, ($stock / max(1, ($medicine->reorder_level * 2))) * 100) : 100;
+        $data = collect($batches instanceof \Illuminate\Pagination\LengthAwarePaginator ? $batches->items() : $batches)->map(function($batch) {
+            $medicine = $batch->medicine;
+            
+            if (!$medicine) {
+                return [
+                    'id' => $batch->id,
+                    'batch_number' => $batch->batch_number,
+                    'medicine_name' => 'Unknown Medicine (ID: ' . $batch->medicine_id . ')',
+                    'medicine_code' => 'N/A',
+                    'medicine_brand' => 'N/A',
+                    'strength' => 'N/A',
+                    'form' => 'N/A',
+                    'category_name' => 'N/A',
+                    'stock' => (int)$batch->remaining_quantity,
+                    'reorder_level' => 0,
+                    'requires_prescription' => false,
+                    'stock_percentage' => 0,
+                    'stock_color' => 'bg-slate-500',
+                    'expiry_date' => $batch->expiry_date ? $batch->expiry_date->format('Y-m-d') : 'N/A',
+                    'is_about_to_expire' => false,
+                    'unit_price' => number_format($batch->unit_price, 2),
+                    'sale_price' => number_format($batch->sale_price, 2),
+                    'view_url' => route('pharmacy.inventory.batch', $batch->id),
+                    'edit_url' => route('pharmacy.inventory.adjust', $batch->id),
+                ];
+            }
+            
+            $stockPercentage = $medicine->reorder_level > 0 ? min(100, ($batch->remaining_quantity / max(1, ($medicine->reorder_level * 2))) * 100) : 100;
             
             return [
-                'id' => $medicine->id,
-                'name' => $medicine->name,
-                'code' => $medicine->code,
-                'brand' => $medicine->brand,
+                'id' => $batch->id,
+                'batch_number' => $batch->batch_number,
+                'medicine_name' => $medicine->name,
+                'medicine_code' => $medicine->code,
+                'medicine_brand' => $medicine->brand,
                 'strength' => $medicine->strength,
-                'form' => $medicine->form,
+                'form' => $medicine->form?->name ?? 'N/A',
                 'category_name' => $medicine->category?->name ?? 'Default',
-                'stock' => (int)$stock,
+                'stock' => (int)$batch->remaining_quantity,
                 'reorder_level' => (int)$medicine->reorder_level,
                 'requires_prescription' => (bool)$medicine->requires_prescription,
                 'stock_percentage' => $stockPercentage,
-                'stock_color' => $stock <= $medicine->reorder_level ? 'bg-rose-500' : 'bg-emerald-500',
-                'view_url' => route('pharmacy.inventory.batch', $medicine->id), // Placeholder
-                'edit_url' => '#',
-                'is_about_to_expire' => false, // Simplified
+                'stock_color' => $batch->remaining_quantity <= $medicine->reorder_level ? 'bg-rose-500' : 'bg-emerald-500',
+                'expiry_date' => $batch->expiry_date ? $batch->expiry_date->format('Y-m-d') : 'N/A',
+                'is_about_to_expire' => $batch->expiry_date ? $batch->expiry_date->diffInDays(now()) <= 30 : false,
+                'unit_price' => number_format($batch->unit_price, 2),
+                'sale_price' => number_format($batch->sale_price, 2),
+                'view_url' => route('pharmacy.inventory.batch', $batch->id),
+                'edit_url' => route('pharmacy.inventory.adjust', $batch->id),
             ];
         });
         
         return response()->json([
             'success' => true,
             'data' => $data,
-            'pagination' => $medicines instanceof \Illuminate\Pagination\LengthAwarePaginator ? [
-                'current_page' => $medicines->currentPage(),
-                'last_page' => $medicines->lastPage(),
-                'per_page' => $medicines->perPage(),
-                'total' => $medicines->total(),
-                'links' => (string)$medicines->links()
+            'pagination' => $batches instanceof \Illuminate\Pagination\LengthAwarePaginator ? [
+                'current_page' => $batches->currentPage(),
+                'last_page' => $batches->lastPage(),
+                'per_page' => $batches->perPage(),
+                'total' => $batches->total(),
+                'links' => (string)$batches->links()
             ] : null,
             'stats' => [
-                'total' => $medicines instanceof \Illuminate\Pagination\LengthAwarePaginator ? $medicines->total() : $medicines->count(),
-                'low_stock' => 0, // Simplified
-                'out_of_stock' => 0 // Simplified
+                'total' => MedicineBatch::where('branch_id', $branchId)->count(),
+                'low_stock' => MedicineBatch::where('branch_id', $branchId)
+                    ->join('medicines', 'medicine_batches.medicine_id', '=', 'medicines.id')
+                    ->whereColumn('medicine_batches.remaining_quantity', '<=', 'medicines.reorder_level')
+                    ->count(),
+                'out_of_stock' => MedicineBatch::where('branch_id', $branchId)->where('remaining_quantity', '<=', 0)->count(),
+                'near_expiry' => MedicineBatch::where('branch_id', $branchId)
+                    ->where('expiry_date', '<=', now()->addDays(30))
+                    ->where('remaining_quantity', '>', 0)
+                    ->count(),
             ]
         ]);
     }
-
-    /**
-     * Get medicine stock for modal
-     */
     public function medicineStock($id)
     {
         $stock = MedicineBatch::where('medicine_id', $id)

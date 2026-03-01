@@ -138,7 +138,7 @@
             <div class="mb-0 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-blue-200">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h2 class="text-2xl font-bold text-navy-800 flex items-center gap-3">
+                        <h2 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight flex items-center gap-3">
                             <i class="fas fa-flask text-blue-600"></i>
                             Laboratory Reports
                             <span class="text-lg font-normal text-gray-600">

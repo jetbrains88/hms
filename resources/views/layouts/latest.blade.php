@@ -503,8 +503,8 @@
                             <i class="fas fa-chart-bar w-5 text-center text-xs opacity-70"></i>
                             <span class="ml-3">Reports</span>
                         </a>
-                        <a href="{{ route('pharmacy.alerts') }}"
-                           class="flex items-center px-4 py-2.5 text-sm rounded-xl hover:shadow-xl text-slate-800 hover:text-white hover:bg-amber-500 transition-colors {{ request()->routeIs('pharmacy.alerts') ? 'text-white bg-amber-500 font-medium shadow-xl' : '' }}">
+                        <a href="{{ route('pharmacy.alerts.index') }}"
+                           class="flex items-center px-4 py-2.5 text-sm rounded-xl hover:shadow-xl text-slate-800 hover:text-white hover:bg-amber-500 transition-colors {{ request()->routeIs('pharmacy.alerts.*') ? 'text-white bg-amber-500 font-medium shadow-xl' : '' }}">
                             <i class="fas fa-exclamation-triangle w-5 text-center text-xs opacity-70"></i>
                             <span class="ml-3">Stock Alerts</span>
                             @if ($pharmacyStats['active_alerts'] ?? 0)
@@ -762,18 +762,11 @@
         {{--                                class="ml-auto bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{{ ($pharmacyStats['low_stock_items'] ?? 0) + ($pharmacyStats['out_of_stock_items'] ?? 0) }}</span>--}}
         {{--                        @endif--}}
         {{--                    </a>--}}
-        {{--                    <a href="{{ route('pharmacy.dispense.history') }}"--}}
-        {{--                       class="flex items-center px-4 py-2.5 text-sm rounded-xl text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors {{ request()->routeIs('pharmacy.dispense.history') ? 'text-amber-600 bg-amber-50 font-medium' : '' }}">--}}
-        {{--                        <i class="fas fa-history w-5 text-center text-xs opacity-70"></i>--}}
-        {{--                        <span class="ml-3">Dispense History</span>--}}
-        {{--                    </a>--}}
-        {{--                    <a href="{{ route('pharmacy.reports') }}"--}}
-        {{--                       class="flex items-center px-4 py-2.5 text-sm rounded-xl text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors {{ request()->routeIs('pharmacy.reports') ? 'text-amber-600 bg-amber-50 font-medium' : '' }}">--}}
         {{--                        <i class="fas fa-chart-bar w-5 text-center text-xs opacity-70"></i>--}}
         {{--                        <span class="ml-3">Reports</span>--}}
         {{--                    </a>--}}
-        {{--                    <a href="{{ route('pharmacy.alerts') }}"--}}
-        {{--                       class="flex items-center px-4 py-2.5 text-sm rounded-xl text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors {{ request()->routeIs('pharmacy.alerts') ? 'text-amber-600 bg-amber-50 font-medium' : '' }}">--}}
+        {{--                    <a href="{{ route('pharmacy.alerts.index') }}"--}}
+        {{--                       class="flex items-center px-4 py-2.5 text-sm rounded-xl text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors {{ request()->routeIs('pharmacy.alerts.*') ? 'text-amber-600 bg-amber-50 font-medium' : '' }}">--}}
         {{--                        <i class="fas fa-exclamation-triangle w-5 text-center text-xs opacity-70"></i>--}}
         {{--                        <span class="ml-3">Stock Alerts</span>--}}
         {{--                        @if ($pharmacyStats['active_alerts'] ?? 0)--}}

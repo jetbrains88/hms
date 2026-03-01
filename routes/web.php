@@ -59,7 +59,7 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Public Live Queue Display (No Auth Required)
-Route::get('/live-queue/{branch?}', [QueueController::class, 'live'])->name('live.queue');
+Route::get('/live-queue/{branch?}', [QueueController::class, 'index'])->name('live.queue');
 
 // ============================================
 // PROTECTED ROUTES (All Authenticated Users)
@@ -326,6 +326,9 @@ Route::middleware(['auth', 'role:reception'])->prefix('reception')->name('recept
         ->name('appointments.update-status');
     Route::post('/appointments/{appointment}/cancel', [ReceptionAppointmentController::class, 'cancel'])
         ->name('appointments.cancel');
+
+    // Queue Management
+    Route::get('/queue', [QueueController::class, 'index'])->name('queue');
 });
 
 // ============================================
@@ -333,6 +336,11 @@ Route::middleware(['auth', 'role:reception'])->prefix('reception')->name('recept
 // ============================================
 
 Route::middleware(['auth', 'role:pharmacy'])->prefix('pharmacy')->name('pharmacy.')->group(function () {
+    // Dispense History
+// Dispense History
+    Route::get('/dispense-history', [PharmacyPrescriptionController::class, 'history'])->name('dispense.history'); // Changed from dispense_history
+    Route::get('/dispense-history/data', [PharmacyPrescriptionController::class, 'getHistoryData'])->name('dispense.history.data'); // Changed from dispense_history_data
+
     // Dashboard
     Route::get('/dashboard', [PharmacyDashboardController::class, 'index'])->name('dashboard');
 
@@ -342,7 +350,7 @@ Route::middleware(['auth', 'role:pharmacy'])->prefix('pharmacy')->name('pharmacy
         ->name('prescriptions.show');
     Route::post('/prescriptions/{prescription}/dispense', [PharmacyPrescriptionController::class, 'dispense'])
         ->name('prescriptions.dispense');
-    Route::get('/prescriptions/{prescription}/print', [PharmacyPrescriptionController::class, 'printLabel'])
+    Route::get('/prescriptions/{prescription}/label', [PharmacyPrescriptionController::class, 'printLabel'])
         ->name('prescriptions.print');
 
     // Medicine Management
@@ -365,13 +373,12 @@ Route::middleware(['auth', 'role:pharmacy'])->prefix('pharmacy')->name('pharmacy
         ->name('inventory.transfer');
 
     // Stock Alerts
-    Route::get('/alerts', [StockAlertController::class, 'index'])->name('alerts');
+    Route::get('/alerts', [StockAlertController::class, 'index'])->name('alerts.index');
+    Route::get('/alerts/data', [StockAlertController::class, 'getAlertsData'])->name('alerts.data');
+    Route::get('/alerts/stats', [StockAlertController::class, 'getStats'])->name('alerts.stats');
     Route::post('/alerts/{alert}/resolve', [StockAlertController::class, 'resolve'])->name('alerts.resolve');
+    Route::post('/alerts/bulk/resolve', [StockAlertController::class, 'bulkResolve'])->name('alerts.bulk-resolve');
     Route::post('/alerts/resolve-all', [StockAlertController::class, 'resolveAll'])->name('alerts.resolve-all');
-
-    // Dispense History
-    Route::get('/dispense-history', [PharmacyPrescriptionController::class, 'history'])->name('dispense.history');
-    Route::get('/dispense-history/data', [PharmacyPrescriptionController::class, 'getHistoryData'])->name('dispense.history.data');
 
     // Reports
     Route::get('/reports', [PharmacyReportController::class, 'index'])->name('reports');

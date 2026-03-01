@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
         $this->command->info('--------------------------------------------');
         $this->call([
             LaboratorySeeder::class,
+            MedicineFormSeeder::class,
         ]);
 
         // PHASE 3: TEST DATA (all tied to CMO branch)
@@ -40,6 +41,7 @@ class DatabaseSeeder extends Seeder
             MedicineSeeder::class,           // Medicines and batches (CMO)
             VisitSeeder::class,               // Visits (CMO)
             LabReportSeeder::class,           // Lab orders (CMO)
+            PrescriptionSeeder::class,        // Prescriptions and Dispensations (CMO)
         ]);
 
         // PHASE 4: NOTIFICATIONS

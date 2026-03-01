@@ -324,7 +324,7 @@ class ReportController extends Controller
 
         return $batches->map(function ($batch) {
             return [
-                $batch->medicine->name,
+                $batch->medicine->name ?? 'N/A',
                 $batch->batch_number,
                 $batch->expiry_date->format('Y-m-d'),
                 $batch->remaining_quantity,
@@ -356,12 +356,12 @@ class ReportController extends Controller
             return [
                 $log->created_at->format('Y-m-d H:i'),
                 $log->type,
-                $log->medicine->name,
+                $log->medicine->name ?? 'N/A',
                 $log->medicineBatch->batch_number ?? 'N/A',
                 $log->quantity,
                 $log->previous_stock,
                 $log->new_stock,
-                $log->user->name,
+                $log->user->name ?? 'N/A',
             ];
         })->toArray();
     }
@@ -393,7 +393,7 @@ class ReportController extends Controller
             }
 
             return [
-                $batch->medicine->name,
+                $batch->medicine->name ?? 'N/A',
                 $batch->batch_number,
                 $batch->expiry_date->format('Y-m-d'),
                 $batch->remaining_quantity,

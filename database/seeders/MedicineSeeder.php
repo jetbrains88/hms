@@ -45,8 +45,8 @@ class MedicineSeeder extends Seeder
         // Now create medicines
         $this->command->info('Creating medicines...');
 
-        $batchSize = 100;
-        $totalMedicines = 1000;
+        $batchSize = 10;
+        $totalMedicines = 100;
 
         for ($i = 0; $i < $totalMedicines; $i += $batchSize) {
             $currentBatch = min($batchSize, $totalMedicines - $i);

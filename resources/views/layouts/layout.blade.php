@@ -577,8 +577,8 @@
 
                     </li>
                     <li>
-                        <a href="{{ route('pharmacy.alerts') }}"
-                           class="sidebar-link {{ request()->routeIs('pharmacy.alerts') ? 'active' : '' }}">
+                        <a href="{{ route('pharmacy.alerts.index') }}"
+                           class="sidebar-link {{ request()->routeIs('pharmacy.alerts.*') ? 'active' : '' }}">
                             <i class="fas fa-exclamation-triangle w-5 text-center"></i>
                             <span class="ml-3">Stock Alerts</span>
                             @if ($pharmacyStats['active_alerts'] ?? 0)

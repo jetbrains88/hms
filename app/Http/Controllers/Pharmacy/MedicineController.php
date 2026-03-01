@@ -142,4 +142,85 @@ class MedicineController extends Controller
 
         return response()->json($medicines);
     }
+
+    /**
+     * AJAX: Get medicine list for catalog
+     */
+    public function apiList(Request $request)
+    {
+        $branchId = auth()->user()->current_branch_id;
+        
+        $query = Medicine::with(['category', 'form'])
+            ->where(function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId)
+                  ->orWhere('is_global', true);
+            });
+            
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('generic_name', 'LIKE', "%{$search}%")
+                  ->orWhere('brand', 'LIKE', "%{$search}%");
+            });
+        }
+        
+        if ($request->filled('category') && $request->category !== 'All') {
+            $query->where('category_id', $request->category);
+        }
+        
+        if ($request->filled('prescription')) {
+            $query->where('requires_prescription', $request->prescription === 'required');
+        }
+        
+        // Sorting
+        $sortBy = $request->get('sort_by', 'name');
+        $sortDirection = $request->get('sort_direction', 'asc');
+        $query->orderBy($sortBy, $sortDirection);
+        
+        $length = $request->get('length', 15);
+        $medicines = ($length === 'All') ? $query->get() : $query->paginate((int)$length);
+        
+        // Map data for Alpine.js
+        $data = collect($medicines instanceof \Illuminate\Pagination\LengthAwarePaginator ? $medicines->items() : $medicines)->map(function($medicine) {
+            $totalStock = $medicine->batches()->where('branch_id', auth()->user()->current_branch_id)->sum('remaining_quantity');
+            
+            return [
+                'id' => $medicine->id,
+                'uuid' => $medicine->uuid,
+                'name' => $medicine->name,
+                'generic_name' => $medicine->generic_name,
+                'brand' => $medicine->brand,
+                'manufacturer' => $medicine->manufacturer ?? 'N/A',
+                'category_name' => $medicine->category?->name ?? 'N/A',
+                'form_name' => $medicine->form?->name ?? 'N/A',
+                'total_stock' => (int)$totalStock,
+                'unit' => $medicine->unit,
+                'reorder_level' => (int)$medicine->reorder_level,
+                'requires_prescription' => (bool)$medicine->requires_prescription,
+                'view_url' => route('pharmacy.medicines.show', $medicine->id),
+                'edit_url' => route('pharmacy.medicines.edit', $medicine->id),
+                'delete_url' => route('pharmacy.medicines.destroy', $medicine->id),
+                'is_low_stock' => $totalStock <= $medicine->reorder_level,
+            ];
+        });
+        
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+            'pagination' => $medicines instanceof \Illuminate\Pagination\LengthAwarePaginator ? [
+                'current_page' => $medicines->currentPage(),
+                'last_page' => $medicines->lastPage(),
+                'per_page' => $medicines->perPage(),
+                'total' => $medicines->total(),
+                'links' => (string)$medicines->links()
+            ] : null,
+            'stats' => [
+                'total' => Medicine::where('branch_id', $branchId)->orWhere('is_global', true)->count(),
+                'rx_required' => Medicine::where('requires_prescription', true)->count(),
+                'global' => Medicine::where('is_global', true)->count(),
+                'low_stock' => $data->filter(fn($m) => $m['is_low_stock'])->count(),
+            ]
+        ]);
+    }
 }

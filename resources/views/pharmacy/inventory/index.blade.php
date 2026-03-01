@@ -1,564 +1,673 @@
-{{-- resources/views/pharmacy/inventory/index.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Inventory Management')
+@section('title', 'Medicine Inventory Management')
 @section('page-title', 'Inventory Management')
-@section('page-description', 'Manage medicine stock and inventory')
+@section('breadcrumb', 'Pharmacy / Inventory')
 
 @section('content')
-    <div class="space-y-6"
-         x-data="inventoryManager()">
+    <div x-data="inventoryManager()" x-init="init()" class="space-y-6">
 
-        <!-- Header with Actions -->
-        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Medicine Inventory</h1>
-                    <p class="text-gray-600 mt-1">Track and manage medicine stock levels</p>
-                </div>
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('pharmacy.inventory.create') }}"
-                       class="px-4 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg font-bold hover:shadow-lg transition-all flex items-center">
-                        <i class="fas fa-plus mr-2"></i>
-                        Add New Medicine
-                    </a>
-                    <button
-                        @click="showBulkUpdateModal()"
-                        class="px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-bold hover:shadow-lg transition-all flex items-center">
-                        <i class="fas fa-boxes mr-2"></i>
-                        Bulk Update
-                    </button>
-                </div>
-            </div>
-        </div>
+        <!-- Light Themed Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 gap-y-10 mt-8 p-4">
 
-        <!-- Filters -->
-        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 justify-between">
-                <!-- Length -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Length</label>
-                    <select x-model="filters.length"
-                            @change="fetchInventory()"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="16" selected>16</option>
-                        <option value="32">32</option>
-                        <option value="64">64</option>
-                        <option value="All">All</option>
-                    </select>
-                </div>
+            <!-- Total Batches Card -->
+            <div class="relative flex flex-col bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl shadow-lg shadow-blue-500/30 border border-blue-200 hover:-translate-y-2 transition-all duration-300 group cursor-pointer"
+                @click="setFilter('stock_status', 'All')" :class="loading ? 'opacity-70 grayscale cursor-not-allowed' : ''">
 
-                <!-- Search -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
-                    <div class="relative">
-                        <input type="text"
-                               x-model.debounce.500ms="filters.search"
-                               @input.debounce.500ms="fetchInventory()"
-                               placeholder="Name, code, or brand..."
-                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                    </div>
-                </div>
-
-                <!-- Category Filter -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                    <select x-model="filters.category"
-                            @change="fetchInventory()"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="All">All Categories</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}">{{ $category->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Stock Status -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Stock Status</label>
-                    <select x-model="filters.stock_status"
-                            @change="fetchInventory()"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="All">All</option>
-                        <option value="low">Low Stock</option>
-                        <option value="out">Out of Stock</option>
-                        <option value="normal">Normal</option>
-                    </select>
-                </div>
-
-                <!-- Sort -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                    <select x-model="filters.sort_by"
-                            @change="fetchInventory()"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="name">Name (A-Z)</option>
-                        <option value="stock">Stock (Low to High)</option>
-                        <option value="stock_desc">Stock (High to Low)</option>
-                        <option value="expiry_date">Expiry Date</option>
-                    </select>
-                </div>
-                <div class="flex mt-5 items-center">
-                    <button @click="resetFilters()" :disabled="!hasActiveFilters()"
-                            class="w-full flex items-center justify-center text-white py-2.5
-                   text-center bg-gradient-to-r from-rose-500 to-rose-600
-                   rounded-lg font-medium hover:from-rose-600 hover:to-rose-700
-                   disabled:opacity-50 disabled:cursor-not-allowed transition-all
-                   gap-2 shadow-md hover:shadow-lg">
-                        <i class="fas fa-filter-circle-xmark"></i>
-                        Clear All Filters
-                    </button>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- Stats Summary -->
-        <div x-show="stats.total > 0"
-             x-transition
-             class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="text-center p-4 bg-blue-50 rounded-xl">
-                    <div class="text-2xl font-bold text-blue-700" x-text="stats.total"></div>
-                    <div class="text-sm text-blue-600">Total Medicines</div>
-                </div>
-                <div class="text-center p-4 bg-emerald-50 rounded-xl">
-                    <div class="text-2xl font-bold text-emerald-700"
-                         x-text="stats.total - stats.low_stock - stats.out_of_stock"></div>
-                    <div class="text-sm text-emerald-600">Normal Stock</div>
-                </div>
-                <div class="text-center p-4 bg-amber-50 rounded-xl">
-                    <div class="text-2xl font-bold text-amber-700" x-text="stats.low_stock"></div>
-                    <div class="text-sm text-amber-600">Low Stock</div>
-                </div>
-                <div class="text-center p-4 bg-rose-50 rounded-xl">
-                    <div class="text-2xl font-bold text-rose-700" x-text="stats.out_of_stock"></div>
-                    <div class="text-sm text-rose-600">Out of Stock</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Loading State -->
-        <div x-show="loading"
-             x-transition
-             class="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
-            <div
-                class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500 mb-4"></div>
-            <p class="text-gray-600">Loading inventory...</p>
-        </div>
-
-        <!-- Inventory Grid -->
-        <div x-show="!loading && medicines.length > 0"
-             x-transition
-             class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <template x-for="medicine in medicines" :key="medicine.id">
                 <div
-                    class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300">
-                    <!-- Medicine Header -->
-                    <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <h3 class="font-bold text-gray-900 text-lg truncate" x-text="medicine.name"></h3>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span class="text-sm text-gray-600" x-text="medicine.code"></span>
-                                    <span x-show="medicine.requires_prescription"
-                                          class="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">
-                                        Rx Required
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-2xl font-bold"
-                                     :class="medicine.stock <= medicine.reorder_level ? 'text-rose-600' : 'text-emerald-600'"
-                                     x-text="medicine.stock"></div>
-                                <div class="text-xs text-gray-500">in stock</div>
-                            </div>
-                        </div>
+                    class="absolute -top-6 left-4 h-16 w-16 grid place-items-center rounded-xl bg-gradient-to-tr from-blue-500 to-cyan-300 shadow-lg shadow-blue-900/40 border border-blue-300 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-boxes text-2xl drop-shadow-md text-blue-700"></i>
+                </div>
+
+                <div class="p-4 text-right pt-6">
+                    <p class="block antialiased font-sans text-sm font-bold tracking-wider text-blue-600 uppercase">
+                        Total Batches
+                    </p>
+                    <h4 class="block antialiased text-3xl font-bold text-blue-800 drop-shadow-md font-mono"
+                        x-text="stats.total ?? 0">
+                    </h4>
+                </div>
+                <div class="mx-4 mb-4 border-t border-blue-300 pt-2">
+                    <div class="flex items-center gap-2">
+                        <span class="h-1.5 w-1.5 rounded-full bg-blue-600"
+                            :class="{ 'animate-pulse': stats.total > 0 }"></span>
+                        <span class="text-xs text-blue-700 font-medium">Active Stock Batches</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Low Stock Card -->
+            <div class="relative flex flex-col bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl shadow-lg shadow-amber-500/30 border border-amber-200 hover:-translate-y-2 transition-all duration-300 group cursor-pointer"
+                @click="setFilter('stock_status', 'low')"
+                :class="loading ? 'opacity-70 grayscale cursor-not-allowed' : ''">
+
+                <div
+                    class="absolute -top-6 left-4 h-16 w-16 grid place-items-center rounded-xl bg-gradient-to-tr from-amber-500 to-orange-300 shadow-lg shadow-amber-900/40 border border-amber-300 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-exclamation-triangle text-2xl drop-shadow-md text-amber-700"></i>
+                </div>
+
+                <div class="p-4 text-right pt-6">
+                    <p class="block antialiased font-sans text-sm font-bold tracking-wider text-amber-600 uppercase">
+                        Low Stock
+                    </p>
+                    <h4 class="block antialiased text-3xl font-bold text-amber-800 drop-shadow-md font-mono"
+                        x-text="stats.low_stock ?? 0">
+                    </h4>
+                </div>
+                <div class="mx-4 mb-4 border-t border-amber-300 pt-2">
+                    <div class="flex items-center gap-2">
+                        <span class="h-1.5 w-1.5 rounded-full bg-amber-600"
+                            :class="{ 'animate-pulse': stats.low_stock > 0 }"></span>
+                        <span class="text-xs text-amber-700 font-medium">Needs Reorder</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Near Expiry Card -->
+            <div class="relative flex flex-col bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl shadow-lg shadow-purple-500/30 border border-purple-200 hover:-translate-y-2 transition-all duration-300 group cursor-pointer"
+                @click="setFilter('stock_status', 'near_expiry')"
+                :class="loading ? 'opacity-70 grayscale cursor-not-allowed' : ''">
+
+                <div
+                    class="absolute -top-6 left-4 h-16 w-16 grid place-items-center rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-300 shadow-lg shadow-purple-900/40 border border-purple-300 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-clock text-2xl drop-shadow-md text-purple-700"></i>
+                </div>
+
+                <div class="p-4 text-right pt-6">
+                    <p class="block antialiased font-sans text-sm font-bold tracking-wider text-purple-600 uppercase">
+                        Near Expiry
+                    </p>
+                    <h4 class="block antialiased text-3xl font-bold text-purple-800 drop-shadow-md font-mono"
+                        x-text="stats.near_expiry ?? 0">
+                    </h4>
+                </div>
+                <div class="mx-4 mb-4 border-t border-purple-300 pt-2">
+                    <div class="flex items-center gap-2">
+                        <span class="h-1.5 w-1.5 rounded-full bg-purple-600"
+                            :class="{ 'animate-pulse': stats.near_expiry > 0 }"></span>
+                        <span class="text-xs text-purple-700 font-medium">Expiring within 30 days</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Out of Stock Card -->
+            <div class="relative flex flex-col bg-gradient-to-br from-rose-50 to-orange-50 rounded-2xl shadow-lg shadow-rose-500/30 border border-rose-200 hover:-translate-y-2 transition-all duration-300 group cursor-pointer"
+                @click="setFilter('stock_status', 'out')"
+                :class="loading ? 'opacity-70 grayscale cursor-not-allowed' : ''">
+
+                <div
+                    class="absolute -top-6 left-4 h-16 w-16 grid place-items-center rounded-xl bg-gradient-to-tr from-rose-500 to-orange-300 shadow-lg shadow-rose-900/40 border border-rose-300 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-times-circle text-2xl drop-shadow-md text-rose-700"></i>
+                </div>
+
+                <div class="p-4 text-right pt-6">
+                    <p class="block antialiased font-sans text-sm font-bold tracking-wider text-rose-600 uppercase">
+                        Out of Stock
+                    </p>
+                    <h4 class="block antialiased text-3xl font-bold text-rose-800 drop-shadow-md font-mono"
+                        x-text="stats.out_of_stock ?? 0">
+                    </h4>
+                </div>
+                <div class="mx-4 mb-4 border-t border-rose-300 pt-2">
+                    <div class="flex items-center gap-2">
+                        <span class="h-1.5 w-1.5 rounded-full bg-rose-600"
+                            :class="{ 'animate-pulse': stats.out_of_stock > 0 }"></span>
+                        <span class="text-xs text-rose-700 font-medium">Empty Batches</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Inventory List -->
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            <!-- Header with Filters -->
+            <div class="mb-0 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-blue-100">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight flex items-center gap-3">
+                            <i class="fas fa-warehouse text-blue-600"></i>
+                            Batch Management
+                            <span class="text-lg font-normal text-gray-600">
+                                (<span x-text="pagination.total"></span> records)
+                            </span>
+                        </h2>
+                        <p class="text-sm text-navy-600 mt-1">
+                            Monitor medicine batches, expiry dates, and stock levels
+                        </p>
                     </div>
 
-                    <!-- Medicine Details -->
-                    <div class="p-6">
-                        <!-- Stock Status Bar -->
-                        <div class="mb-4">
-                            <div class="flex justify-between text-xs text-gray-600 mb-1">
-                                <span>Current Stock</span>
-                                <span x-text="'Reorder Level: ' + medicine.reorder_level"></span>
-                            </div>
-                            <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div class="h-full"
-                                     :class="medicine.stock_color"
-                                     :style="'width: ' + medicine.stock_percentage + '%'"></div>
-                            </div>
-                        </div>
-
-                        <!-- Details Grid -->
-                        <div class="space-y-3">
-                            <div class="grid grid-cols-2 gap-2">
-                                <div class="bg-gray-50 p-2 rounded">
-                                    <div class="text-xs text-gray-500">Strength</div>
-                                    <div class="font-medium text-gray-800" x-text="medicine.strength"></div>
-                                </div>
-                                <div class="bg-gray-50 p-2 rounded">
-                                    <div class="text-xs text-gray-500">Form</div>
-                                    <div class="font-medium text-gray-800" x-text="medicine.form"></div>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-2">
-                                <div class="bg-gray-50 p-2 rounded">
-                                    <div class="text-xs text-gray-500">Category</div>
-                                    <div class="font-medium text-gray-800" x-text="medicine.category_name"></div>
-                                </div>
-                                <div class="bg-gray-50 p-2 rounded">
-                                    <div class="text-xs text-gray-500">Brand</div>
-                                    <div class="font-medium text-gray-800" x-text="medicine.brand"></div>
-                                </div>
-                            </div>
-
-                            <div x-show="medicine.expiry_date"
-                                 class="bg-amber-50 border border-amber-200 p-2 rounded">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <div class="text-xs text-amber-700">Expiry Date</div>
-                                        <div class="font-medium text-amber-900"
-                                             x-text="medicine.expiry_date"></div>
-                                    </div>
-                                    <i x-show="medicine.is_about_to_expire"
-                                       class="fas fa-exclamation-triangle text-amber-500"></i>
-                                </div>
-                            </div>
-
-                            <div x-show="medicine.supplier_name"
-                                 class="bg-blue-50 border border-blue-200 p-2 rounded">
-                                <div class="text-xs text-blue-700">Supplier</div>
-                                <div class="font-medium text-blue-900 truncate"
-                                     x-text="medicine.supplier_name"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="p-6 border-t border-gray-100 bg-gray-50">
+                    <div class="flex flex-wrap gap-3 items-center">
+                        <!-- Records per page -->
                         <div class="flex items-center gap-2">
-                            <a :href="medicine.view_url"
-                               class="flex-1 px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 rounded-lg font-medium hover:shadow transition-all text-center">
-                                <i class="fas fa-eye mr-1"></i> View
-                            </a>
-                            <button @click="showUpdateStockModal(medicine.id, medicine.name)"
-                                    class="flex-1 px-3 py-2 bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-700 rounded-lg font-medium hover:shadow transition-all">
-                                <i class="fas fa-edit mr-1"></i> Update
+                            <span class="text-sm text-gray-700">Show:</span>
+                            <select x-model="filters.length" @change="fetchInventory()"
+                                class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="flex gap-2">
+                            <button @click="clearFilters()"
+                                class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
+                                <i class="fas fa-sync-alt"></i>
+                                Refresh
                             </button>
-                            <a :href="medicine.edit_url"
-                               class="px-3 py-2 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 rounded-lg font-medium hover:shadow transition-all">
-                                <i class="fas fa-cog"></i>
+                            <button @click="showAdvancedFilters = !showAdvancedFilters"
+                                :class="showAdvancedFilters ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' :
+                                    'bg-gradient-to-r from-orange-500 to-orange-600 text-white'"
+                                class="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium">
+                                <i class="fas fa-filter"></i>
+                                Filters
+                            </button>
+                            <!-- Add Stock Button -->
+                            <a href="{{ route('pharmacy.inventory.create') }}"
+                                class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-colors text-sm font-medium shadow-md hover:shadow-lg">
+                                <i class="fas fa-plus-circle"></i>
+                                Add Stock
                             </a>
                         </div>
                     </div>
                 </div>
-            </template>
-        </div>
 
-        <!-- Empty State -->
-        <div x-show="!loading && medicines.length === 0"
-             x-transition
-             class="col-span-full">
-            <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
-                <i class="fas fa-box-open text-4xl text-gray-400 mb-4"></i>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">No medicines found</h3>
-                <p class="text-gray-600">Try adjusting your filters or add a new medicine</p>
+                <!-- Advanced Filters (Collapsible) -->
+                <div x-show="showAdvancedFilters" x-transition
+                    class="mt-6 bg-white p-6 rounded-lg bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 shadow-lg">
+
+                    <!-- First Row - Search, Status, Category -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Search Input -->
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                            <input type="text" x-model="filters.search" @input.debounce.500ms="fetchInventory()"
+                                placeholder="Search by name, brand, batch..."
+                                class="pl-10 w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white font-medium text-slate-700">
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div>
+                            <select x-model="filters.stock_status" @change="fetchInventory()"
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white font-bold text-slate-600">
+                                <option value="All">All Stock Status</option>
+                                <option value="low">Low Stock</option>
+                                <option value="out">Out of Stock</option>
+                                <option value="near_expiry">Near Expiry</option>
+                            </select>
+                        </div>
+
+                        <!-- Category Filter -->
+                        <div>
+                            <select x-model="filters.category" @change="fetchInventory()"
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white font-bold text-slate-600">
+                                <option value="All">All Categories</option>
+                                @foreach ($categories as $category)
+                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Second Row - Sort By, Clear Button -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <!-- Sort By -->
+                        <div>
+                            <select x-model="filters.sort_by" @change="fetchInventory()"
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white font-bold text-slate-600">
+                                <option value="expiry_date">Expiry Date (Earliest)</option>
+                                <option value="name">Medicine Name (A-Z)</option>
+                                <option value="stock">Stock (Low to High)</option>
+                                <option value="stock_desc">Stock (High to Low)</option>
+                            </select>
+                        </div>
+
+                        <div></div>
+
+                        <!-- Clear All Filters Button -->
+                        <div class="flex items-end">
+                            <button @click="clearFilters()"
+                                class="w-full flex items-center justify-center text-white py-2.5
+                       text-center bg-gradient-to-r from-rose-500 to-rose-600
+                       rounded-lg font-medium hover:from-rose-600 hover:to-rose-700
+                       disabled:opacity-50 disabled:cursor-not-allowed transition-all
+                       gap-2 shadow-md hover:shadow-lg h-[46px]">
+                                <i class="fas fa-filter-circle-xmark"></i>
+                                Clear All Filters
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Active Filters Summary -->
+                    <div x-show="filters.search || filters.category !== 'All' || filters.stock_status !== 'All'"
+                        class="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-purple-200">
+                        <span class="text-xs font-medium text-gray-500">Active filters:</span>
+
+                        <template x-if="filters.search">
+                            <span
+                                class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs">
+                                <i class="fas fa-search"></i>
+                                <span x-text="filters.search"></span>
+                                <button @click="filters.search = ''; fetchInventory()" class="ml-1 hover:text-blue-900">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </span>
+                        </template>
+
+                        <template x-if="filters.stock_status !== 'All'">
+                            <span
+                                class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs">
+                                <i class="fas fa-tag"></i>
+                                <span x-text="getStockStatusLabel(filters.stock_status)"></span>
+                                <button @click="filters.stock_status = 'All'; fetchInventory()" class="ml-1 hover:text-green-900">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </span>
+                        </template>
+
+                        <button @click="clearFilters()" class="text-xs text-rose-600 hover:text-rose-800 underline ml-2">
+                            Clear all
+                        </button>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- Pagination -->
-        <div x-show="!loading && pagination.total > pagination.per_page"
-             x-transition
-             x-html="pagination.links"
-             @click.prevent="handlePaginationClick($event)"
-             class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+            <!-- Batches Table -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gradient-to-r from-indigo-100 to-indigo-100">
+                        <tr>
+                            <th scope="col"
+                                class="px-5 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-pills text-blue-500"></i>
+                                    Medicine & Batch
+                                </div>
+                            </th>
+                            <th scope="col"
+                                class="px-5 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-tag text-purple-500"></i>
+                                    Category & Form
+                                </div>
+                            </th>
+                            <th scope="col"
+                                class="px-5 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-cubes text-emerald-500"></i>
+                                    Stock Level
+                                </div>
+                            </th>
+                            <th scope="col"
+                                class="px-5 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-calendar-alt text-orange-500"></i>
+                                    Expiration
+                                </div>
+                            </th>
+                            <th scope="col"
+                                class="px-5 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-money-bill-wave text-cyan-500"></i>
+                                    Pricing
+                                </div>
+                            </th>
+                            <th scope="col"
+                                class="px-5 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-cogs text-navy-500"></i>
+                                    Actions
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100" x-show="!loading && medicines && medicines.length > 0">
+                        <template x-for="batch in medicines" :key="batch.id">
+                            <tr class="hover:bg-blue-50/30 transition-colors duration-200">
+                                <!-- Medicine Info -->
+                                <td class="px-5 py-4 whitespace-nowrap">
+                                    <div class="flex flex-col">
+                                        <div class="text-base font-black text-slate-800 leading-tight" x-text="batch.medicine_name"></div>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest" x-text="batch.medicine_code"></span>
+                                            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold" x-text="'#' + batch.batch_number"></span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Category & Form -->
+                                <td class="px-5 py-4 whitespace-nowrap">
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded-md text-[10px] w-fit" x-text="batch.category_name"></span>
+                                        <span class="text-slate-500 font-bold text-[10px] uppercase tracking-wider px-1" x-text="batch.form"></span>
+                                    </div>
+                                </td>
+
+                                <!-- Stock Level -->
+                                <td class="px-5 py-4 whitespace-nowrap">
+                                    <div class="flex flex-col min-w-[120px]">
+                                        <div class="flex justify-between items-baseline mb-1">
+                                            <span class="text-xl font-black" :class="batch.stock <= batch.reorder_level ? 'text-rose-600' : 'text-emerald-600'" x-text="batch.stock"></span>
+                                            <span class="text-[10px] text-slate-400 font-bold uppercase ml-1">Remaining</span>
+                                        </div>
+                                        <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                                            <div class="h-full transition-all duration-500"
+                                                :class="batch.stock_color"
+                                                :style="'width: ' + batch.stock_percentage + '%'"></div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Expiry -->
+                                <td class="px-5 py-4 whitespace-nowrap">
+                                    <div class="flex flex-col">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-black text-slate-700" x-text="batch.expiry_date"></span>
+                                            <template x-if="batch.is_about_to_expire">
+                                                <i class="fas fa-exclamation-triangle text-amber-500 animate-pulse" title="Near Expiry"></i>
+                                            </template>
+                                        </div>
+                                        <span class="text-[10px] font-bold uppercase tracking-widest" 
+                                              :class="batch.is_about_to_expire ? 'text-amber-600' : 'text-slate-400'"
+                                              x-text="batch.is_about_to_expire ? 'Expiring Soon' : 'Valid Batch'"></span>
+                                    </div>
+                                </td>
+
+                                <!-- Pricing -->
+                                <td class="px-5 py-4 whitespace-nowrap">
+                                    <div class="flex flex-col">
+                                        <div class="text-sm text-slate-500">
+                                            <span class="text-[10px] font-bold uppercase">CP:</span>
+                                            <span class="font-bold font-mono" x-text="batch.unit_price"></span>
+                                        </div>
+                                        <div class="text-sm text-indigo-700">
+                                            <span class="text-[10px] font-bold uppercase">SP:</span>
+                                            <span class="font-black font-mono" x-text="batch.sale_price"></span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="px-5 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex items-center gap-2">
+                                        <a :href="batch.view_url" class="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="View History">
+                                            <i class="fas fa-history"></i>
+                                        </a>
+                                        <button @click="showUpdateStockModal(batch.id, batch.medicine_name)" 
+                                                class="p-2 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Adjust Stock">
+                                            <i class="fas fa-sliders"></i>
+                                        </button>
+                                        <a :href="batch.edit_url" class="p-2 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white transition-all shadow-sm" title="Edit Batch">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+
+                    <!-- Loading State -->
+                    <tbody x-show="loading">
+                        <tr>
+                            <td colspan="6" class="px-6 py-20 text-center">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4 shadow-inner"></div>
+                                    <p class="text-slate-600 font-black uppercase tracking-widest text-xs">Loading Inventory System...</p>
+                                    <p class="text-[10px] text-slate-400 mt-1 font-bold">PLEASE WAIT WHILE WE SYNCHRONIZE BATCH DATA</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+
+                    <!-- Empty State -->
+                    <tbody x-show="!loading && (!medicines || medicines.length === 0)">
+                        <tr>
+                            <td colspan="6" class="px-6 py-32 text-center">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="w-24 h-24 mb-6 bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-200 shadow-inner">
+                                        <i class="fas fa-box-open text-5xl"></i>
+                                    </div>
+                                    <h3 class="text-xl font-black text-slate-400">Inventory Empty</h3>
+                                    <p class="text-slate-300 mt-2 font-medium max-w-sm mx-auto">
+                                        No active batches found matching your current filters. Start by adding new stock or adjust your search.
+                                    </p>
+                                    <a href="{{ route('pharmacy.inventory.create') }}"
+                                        class="mt-8 inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl font-bold hover:shadow-lg transition-all shadow-blue-200/50">
+                                        <i class="fas fa-plus-circle"></i>
+                                        Add First Stock Batch
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div x-show="!loading && medicines && medicines.length > 0" class="bg-white px-6 py-4 border-t border-gray-100">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <!-- Pagination Info -->
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                        Showing <span class="text-slate-700 font-black" x-text="pagination.from"></span> to
+                        <span class="text-slate-700 font-black" x-text="pagination.to"></span> of
+                        <span class="text-slate-700 font-black" x-text="pagination.total"></span> batches
+                    </div>
+
+                    <!-- Pagination Controls -->
+                    <nav class="flex items-center space-x-2">
+                        <!-- First Page -->
+                        <button @click="changePage(1)" :disabled="pagination.current_page === 1"
+                            class="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                            <i class="fas fa-angle-double-left"></i>
+                        </button>
+
+                        <!-- Previous Page -->
+                        <button @click="changePage(pagination.current_page - 1)" :disabled="pagination.current_page === 1"
+                            class="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+
+                        <!-- Page Numbers -->
+                        <template x-for="page in getPageRange()" :key="page">
+                            <button @click="page !== '...' && changePage(page)"
+                                :class="page === pagination.current_page ?
+                                    'bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-none shadow-md' :
+                                    'border-slate-200 text-slate-600 hover:bg-slate-50'"
+                                :disabled="page === '...'"
+                                class="w-10 h-10 rounded-xl border text-[10px] font-black transition-all">
+                                <span x-text="page"></span>
+                            </button>
+                        </template>
+
+                        <!-- Next Page -->
+                        <button @click="changePage(pagination.current_page + 1)"
+                            :disabled="pagination.current_page === pagination.last_page"
+                            class="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+
+                        <!-- Last Page -->
+                        <button @click="changePage(pagination.last_page)"
+                            :disabled="pagination.current_page === pagination.last_page"
+                            class="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                            <i class="fas fa-angle-double-right"></i>
+                        </button>
+                    </nav>
+                </div>
+            </div>
         </div>
     </div>
-
-    <!-- Update Stock Modal (keep as is) -->
-    <!-- ... existing modal code ... -->
 @endsection
 
 @push('scripts')
     <script>
-        // Inventory Manager Alpine.js Component
         function inventoryManager() {
             return {
                 // State
                 medicines: [],
+                loading: false,
+                showAdvancedFilters: false,
+                stats: {
+                    total: 0,
+                    low_stock: 0,
+                    near_expiry: 0,
+                    out_of_stock: 0
+                },
                 defaultFilters: {
                     category: 'All',
                     stock_status: 'All',
                     sort_by: 'expiry_date',
                     sort_direction: 'asc',
-                    length: 16,
+                    length: 10,
                     search: ''
                 },
-                filters: @json(json_decode($initialFilters, true)),
+                filters: {
+                    category: 'All',
+                    stock_status: 'All',
+                    sort_by: 'expiry_date',
+                    sort_direction: 'asc',
+                    length: 10,
+                    search: ''
+                },
                 pagination: {
                     current_page: 1,
                     last_page: 1,
-                    per_page: 16,
+                    per_page: 10,
                     total: 0,
-                    links: ''
+                    from: 0,
+                    to: 0
                 },
-                stats: {
-                    total: 0,
-                    low_stock: 0,
-                    out_of_stock: 0
-                },
-                loading: false,
-                debounceTimer: null,
 
-                // Initialize - fetch initial data on page load
+                // Initialize
                 init() {
+                    // Try to load filters from URL
+                    const urlParams = new URLSearchParams(window.location.search);
+                    for (let key in this.filters) {
+                        if (urlParams.has(key)) {
+                            this.filters[key] = urlParams.get(key);
+                        }
+                    }
+                    if (urlParams.has('page')) {
+                        this.pagination.current_page = parseInt(urlParams.get('page'));
+                    }
+
                     this.fetchInventory();
-                    this.updateURL();
                 },
 
-                // Reset all filters to default values
-                resetFilters() {
-                    this.filters = {...this.defaultFilters};
+                // Set a specific filter and fetch
+                setFilter(key, value) {
+                    this.filters[key] = value;
+                    this.pagination.current_page = 1;
                     this.fetchInventory();
-                    showNotification('Filters reset to default', 'info');
                 },
 
-                // Remove a specific filter
-                removeFilter(filterKey) {
-                    if (filterKey in this.defaultFilters) {
-                        this.filters[filterKey] = this.defaultFilters[filterKey];
-                        this.fetchInventory();
-                    }
+                // Reset all filters
+                clearFilters() {
+                    this.filters = { ...this.defaultFilters };
+                    this.pagination.current_page = 1;
+                    this.fetchInventory();
                 },
 
-                // Check if a specific filter is active (not default)
-                isFilterActive(key) {
-                    if (!this.filters || typeof this.filters !== 'object') {
-                        return false;
-                    }
-
-                    // Check if key exists in filters
-                    if (!Object.prototype.hasOwnProperty.call(this.filters, key)) {
-                        return false;
-                    }
-
-                    const value = this.filters[key];
-                    const defaultValues = this.defaultFilters;
-
-                    // Special handling for search
-                    if (key === 'search') {
-                        return value && value.trim() !== '';
-                    }
-
-                    // Special handling for category (0 means "All Categories")
-                    if (key === 'category') {
-                        return value !== 'All';
-                    }
-
-                    // For other filters, check if different from default
-                    if (key in defaultValues) {
-                        return value !== defaultValues[key];
-                    }
-
-                    return false;
+                // Change page
+                changePage(page) {
+                    if (page < 1 || page > this.pagination.last_page) return;
+                    this.pagination.current_page = page;
+                    this.fetchInventory();
                 },
 
-                // Check if any filters are active
-                hasActiveFilters() {
-                    return Object.keys(this.filters).some(key =>
-                        this.isFilterActive(key, this.filters[key])
-                    );
-                },
-
-                // Get human-readable label for active filter
-                getFilterLabel(key, value) {
-                    if (!value) return '';
-
-                    const labels = {
-                        'length': `Show: ${value === 'All' ? 'All Items' : value + ' items'}`,
-                        'search': `Search: "${value}"`,
-                        'category': this.getCategoryLabel(value),
-                        'stock_status': this.getStockStatusLabel(value),
-                        'sort_by': this.getSortLabel(value),
-                        'sort_direction': `Sort: ${value === 'asc' ? 'Ascending' : 'Descending'}`
-                    };
-
-                    return labels[key] || `${key}: ${value}`;
-                },
-
-                // Helper methods for filter labels
-                getCategoryLabel(categoryId) {
-                    // You could fetch category names from a data attribute or API
-                    // For now, we'll use a simple approach
-                    const categorySelect = document.getElementById('category-filter');
-                    if (categorySelect) {
-                        const option = categorySelect.querySelector(`option[value="${categoryId}"]`);
-                        if (option) return `Category: ${option.textContent}`;
-                    }
-                    return `Category: ${categoryId}`;
-                },
-
-                getStockStatusLabel(status) {
-                    const labels = {
-                        'low': 'Low Stock',
-                        'out': 'Out of Stock',
-                        'normal': 'Normal Stock'
-                    };
-                    return labels[status] || status;
-                },
-
-                getSortLabel(sortBy) {
-                    const labels = {
-                        'name': 'Name (A-Z)',
-                        'stock': 'Stock (Low to High)',
-                        'stock_desc': 'Stock (High to Low)',
-                        'expiry_date': 'Expiry Date'
-                    };
-                    return `Sort: ${labels[sortBy] || sortBy}`;
-                },
-
-                // Fetch inventory data from inventoryList endpoint
+                // Fetch inventory data
                 async fetchInventory() {
                     this.loading = true;
-
                     try {
-                        // Build query string from filters
-                        const queryString = new URLSearchParams(this.filters).toString();
+                        const queryParams = new URLSearchParams({
+                            ...this.filters,
+                            page: this.pagination.current_page
+                        });
 
-                        // Use the same endpoint for both initial and filtered data
-                        const response = await fetch(`/pharmacy/inventory/list?${queryString}`, {
+                        const response = await fetch(`/pharmacy/inventory/list?${queryParams}`, {
                             headers: {
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest'
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
                             }
                         });
 
-                        if (!response.ok) {
-                            showNotification(response.statusText, "error", "Inventory List Loading")
-                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                        }
+                        if (!response.ok) throw new Error('Data fetch failed');
 
                         const result = await response.json();
                         if (result.success) {
                             this.medicines = result.data;
-                            this.pagination = result.pagination;
                             this.stats = result.stats;
-                            // Update filters with any server-side adjustments
-                            if (result.filters) {
-                                this.filters = {...this.filters, ...result.filters};
-                            }
+                            this.pagination = {
+                                ...this.pagination,
+                                current_page: result.pagination.current_page,
+                                last_page: result.pagination.last_page,
+                                total: result.pagination.total,
+                                from: (result.pagination.current_page - 1) * result.pagination.per_page + 1,
+                                to: Math.min(result.pagination.current_page * result.pagination.per_page, result.pagination.total)
+                            };
 
-                            // Update browser URL
-                            this.updateURL();
-                        } else {
-                            showNotification(result.message || 'Error loading data', 'error');
+                            // Update URL
+                            const newUrl = new URL(window.location.href);
+                            for (let key in this.filters) {
+                                if (this.filters[key] !== this.defaultFilters[key]) {
+                                    newUrl.searchParams.set(key, this.filters[key]);
+                                } else {
+                                    newUrl.searchParams.delete(key);
+                                }
+                            }
+                            if (this.pagination.current_page > 1) {
+                                newUrl.searchParams.set('page', this.pagination.current_page);
+                            } else {
+                                newUrl.searchParams.delete('page');
+                            }
+                            window.history.pushState({}, '', newUrl);
                         }
                     } catch (error) {
                         console.error('Error fetching inventory:', error);
-                        showNotification('Error loading inventory data. Please try again.', 'error');
+                        if (window.showNotification) showNotification('Error loading data', 'error');
                     } finally {
                         this.loading = false;
                     }
                 },
 
-                // Handle pagination clicks
-                handlePaginationClick(event) {
-                    const link = event.target.closest('a');
-                    if (!link || !link.href) return;
+                // Pagination range helper
+                getPageRange() {
+                    const current = this.pagination.current_page;
+                    const last = this.pagination.last_page;
+                    const range = [];
+                    const offset = 2;
 
-                    event.preventDefault();
-
-                    const url = new URL(link.href);
-                    const page = url.searchParams.get('page');
-
-                    if (page) {
-                        // Update page in filters and refetch
-                        this.filters.page = page;
-                        this.fetchInventory();
-                    }
-                },
-
-                // Update browser URL without reloading
-                updateURL() {
-                    // Remove page from filters for URL (we'll use pagination links)
-                    const urlFilters = {...this.filters};
-                    delete urlFilters.page;
-
-                    const queryString = new URLSearchParams(urlFilters).toString();
-                    const newUrl = `${window.location.pathname}?${queryString}`;
-                    window.history.pushState({path: newUrl}, '', newUrl);
-                },
-
-                // Show bulk update modal
-                showBulkUpdateModal() {
-                    alert('Bulk update feature coming soon!');
-                },
-
-                // Show update stock modal
-                showUpdateStockModal(medicineId, medicineName) {
-                    // Dispatch event to modal component
-                    const event = new CustomEvent('show-stock-modal', {
-                        detail: {medicineId, medicineName}
-                    });
-                    window.dispatchEvent(event);
-
-                    // Fetch current stock for the modal
-                    this.fetchMedicineStock(medicineId);
-                },
-
-                // Fetch medicine stock for modal
-                async fetchMedicineStock(medicineId) {
-                    try {
-                        const response = await fetch(`/pharmacy/inventory/${medicineId}/stock`, {
-                            headers: {
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        });
-
-                        if (response.ok) {
-                            const data = await response.json();
-
-                            // Update modal with stock data
-                            const event = new CustomEvent('update-stock-data', {
-                                detail: {
-                                    medicineId,
-                                    currentStock: data.stock
-                                }
-                            });
-                            window.dispatchEvent(event);
+                    for (let i = 1; i <= last; i++) {
+                        if (i === 1 || i === last || (i >= current - offset && i <= current + offset)) {
+                            range.push(i);
+                        } else if (i === current - offset - 1 || i === current + offset + 1) {
+                            range.push('...');
                         }
-                    } catch (error) {
-                        console.error('Error fetching stock:', error);
                     }
+                    return range;
                 },
+
+                // Helper for status label
+                getStockStatusLabel(status) {
+                    const labels = {
+                        'All': 'All Stock',
+                        'low': 'Low Stock',
+                        'out': 'Out of Stock',
+                        'near_expiry': 'Near Expiry'
+                    };
+                    return labels[status] || status;
+                },
+
+                // Mock functions for missing global dependencies
+                showUpdateStockModal(id, name) {
+                    // This should be implemented or integrated with existing modal logic
+                    console.log('Update stock for batch:', id, name);
+                    // Example: window.dispatchEvent(new CustomEvent('show-stock-modal', { detail: { batchId: id, name: name } }));
+                }
             }
         }
-
-        // // Handle browser back/forward buttons
-        // window.addEventListener('popstate', function (event) {
-        //     // If we need to handle browser navigation, we can reload filters from URL
-        //     const urlParams = new URLSearchParams(window.location.search);
-        //     const inventoryManager = document.querySelector('[x-data="inventoryManager()"]');
-        //
-        //     if (inventoryManager && inventoryManager.__x) {
-        //         const component = inventoryManager.__x.$data;
-        //
-        //         // Update filters from URL
-        //         component.filters.length = urlParams.get('length') || 16;
-        //         component.filters.search = urlParams.get('search') || '';
-        //         component.filters.category = urlParams.get('category') || 'All';
-        //         component.filters.stock_status = urlParams.get('stock_status') || 'All';
-        //         component.filters.sort_by = urlParams.get('sort_by') || 'name';
-        //         component.filters.sort_direction = urlParams.get('sort_direction') || 'asc';
-        //
-        //         // Refetch data
-        //         component.fetchInventory();
-        //     }
-        // });
     </script>
 @endpush

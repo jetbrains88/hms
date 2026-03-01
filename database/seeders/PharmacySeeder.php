@@ -294,6 +294,7 @@ class PharmacySeeder extends Seeder
                     'branch_id' => $branch->id,
                     'medicine_id' => $medId,
                     'batch_number' => $batchNumber . '-' . $branch->id,
+                    'rc_number' => 'RC-' . strtoupper(Str::random(6)),
                     'expiry_date' => $expiryDate,
                     'unit_price' => $medData['unit_price'],
                     'sale_price' => $medData['selling_price'],

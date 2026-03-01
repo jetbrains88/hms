@@ -130,13 +130,15 @@ class MedicineFactory extends Factory
             $category = MedicineCategory::factory()->create();
         }
 
+        $form = \App\Models\MedicineForm::inRandomOrder()->first();
+
         return [
             'uuid' => Str::uuid(),
             'name' => $name,
             'generic_name' => $name,
             'brand' => $brand,
             'manufacturer' => $brand,
-            'form_id' => null,
+            'form_id' => $form?->id,
             'strength_value' => $this->extractStrengthValue($strength),
             'strength_unit' => $this->extractStrengthUnit($strength),
             'unit' => $unit,
@@ -174,6 +176,7 @@ class MedicineFactory extends Factory
                     'branch_id' => $branchId,
                     'medicine_id' => $medicine->id,
                     'batch_number' => 'BATCH-' . strtoupper($this->faker->bothify('??####')) . '-' . $medicine->id,
+                    'rc_number' => 'RC-' . strtoupper($this->faker->bothify('##??##')),
                     'expiry_date' => $this->faker->dateTimeBetween('+6 months', '+3 years')->format('Y-m-d'),
                     'unit_price' => $this->faker->randomFloat(2, 0.5, 50),
                     'sale_price' => $this->faker->randomFloat(2, 1, 100),

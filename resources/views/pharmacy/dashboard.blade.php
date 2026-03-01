@@ -82,7 +82,7 @@
                         <i class="fas fa-exclamation-triangle text-white text-xl"></i>
                     </div>
                 </div>
-                <a href="{{ route('pharmacy.alerts') }}"
+                <a href="{{ route('pharmacy.alerts.index') }}"
                     class="block mt-4 text-rose-600 hover:text-rose-800 text-sm font-medium">
                     View Alerts →
                 </a>

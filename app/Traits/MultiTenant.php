@@ -60,8 +60,20 @@ trait MultiTenant
     protected static function bootMultiTenant()
     {
         static::addGlobalScope('branch', function (Builder $builder) {
-            if (auth()->check() && !auth()->user()->hasRole('super_admin')) {
-                $builder->forUserBranches();
+            $user = auth()->user();
+            if ($user && !$user->hasRole('super_admin')) {
+                $model = $builder->getModel();
+                
+                $builder->where(function (Builder $query) use ($user, $model) {
+                    // Branch-specific results
+                    $branchIds = $user->branches()->pluck('branches.id')->toArray();
+                    $query->whereIn($model->getTable() . '.branch_id', $branchIds);
+                    
+                    // Include global items if supported
+                    if (in_array('is_global', $model->getFillable())) {
+                        $query->orWhere($model->getTable() . '.is_global', true);
+                    }
+                });
             }
         });
     }

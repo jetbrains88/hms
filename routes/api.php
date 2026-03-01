@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\Api\PharmacyFilterDataController;
+
 
 // Protected API routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -15,4 +17,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/search', [SearchController::class, 'global'])->name('api.search');
     Route::get('/search/patients', [SearchController::class, 'patients'])->name('api.search.patients');
     Route::get('/search/medicines', [SearchController::class, 'medicines'])->name('api.search.medicines');
+});
+Route::middleware(['auth:sanctum'])->group(function () {
+    // Medicine filter data endpoints
+    Route::get('/filter-data/medicines', [PharmacyFilterDataController::class, 'getMedicineFilterData']);
+    Route::get('/filter-data/medicines/category/{categoryId}', [PharmacyFilterDataController::class, 'getMedicinesByCategory']);
+    Route::get('/filter-data/medicines/{medicineId}/batches', [PharmacyFilterDataController::class, 'getMedicineBatches']);
+    Route::get('/filter-data/medicines/search', [PharmacyFilterDataController::class, 'searchMedicines']);
 });

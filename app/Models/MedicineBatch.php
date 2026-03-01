@@ -19,6 +19,7 @@ class MedicineBatch extends Model
         'branch_id',
         'medicine_id',
         'batch_number',
+        'rc_number',
         'expiry_date',
         'unit_price',
         'sale_price',

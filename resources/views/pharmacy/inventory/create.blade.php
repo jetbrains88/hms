@@ -1,256 +1,152 @@
 @extends('layouts.app')
 
-@section('title', 'Add New Medicine')
-@section('page-title', 'Pharmacy Inventory')
-@section('breadcrumb', 'Add New Medicine')
+@section('title', 'Add Inventory Stock')
+@section('page-title', 'Inventory Management')
+@section('breadcrumb', 'Pharmacy / Inventory / Add Stock')
 
 @section('content')
-    <div class="max-w-4xl mx-auto">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="mb-6">
-                <h2 class="text-xl font-bold text-gray-900">Add New Medicine</h2>
-                <p class="text-gray-600 mt-1">Fill in the details below to add a new medicine to the inventory</p>
-            </div>
-
-            <form action="{{ route('pharmacy.inventory.store') }}" method="POST">
-                @csrf
-
-                <!-- Basic Information -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-                        <i class="fas fa-info-circle mr-2 text-blue-500"></i>Basic Information
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- ADD THIS: Code field -->
-                        <div>
-                            <label for="code" class="block text-sm font-medium text-gray-700 mb-1">
-                                Medicine Code *
-                            </label>
-                            <input type="text" name="code" id="code" required
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="e.g., MED-001">
-                        </div>
-
-                        <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-                                Medicine Name *
-                            </label>
-                            <input type="text" name="name" id="name" required
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-
-                        <div>
-                            <label for="generic_name" class="block text-sm font-medium text-gray-700 mb-1">
-                                Generic Name
-                            </label>
-                            <input type="text" name="generic_name" id="generic_name"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-
-                        <!-- ADD THIS: Brand field -->
-                        <div>
-                            <label for="brand" class="block text-sm font-medium text-gray-700 mb-1">
-                                Brand
-                            </label>
-                            <input type="text" name="brand" id="brand"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-
-                        <div>
-                            <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">
-                                Category *
-                            </label>
-                            <select name="category_id" id="category_id" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">Select Category</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div>
-                            <label for="manufacturer" class="block text-sm font-medium text-gray-700 mb-1">
-                                Manufacturer
-                            </label>
-                            <input type="text" name="manufacturer" id="manufacturer"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-
-                        <!-- ADD THIS: Form field (required) -->
-                        <div>
-                            <label for="form" class="block text-sm font-medium text-gray-700 mb-1">
-                                Form *
-                            </label>
-                            <select name="form" id="form" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">Select Form</option>
-                                <option value="tablet">Tablet</option>
-                                <option value="capsule">Capsule</option>
-                                <option value="syrup">Syrup</option>
-                                <option value="injection">Injection</option>
-                                <option value="ointment">Ointment</option>
-                                <option value="cream">Cream</option>
-                                <option value="drops">Drops</option>
-                                <option value="inhaler">Inhaler</option>
-                                <option value="powder">Powder</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-
-                        <!-- ADD THIS: Strength field (required) -->
-                        <div>
-                            <label for="strength" class="block text-sm font-medium text-gray-700 mb-1">
-                                Strength *
-                            </label>
-                            <input type="text" name="strength" id="strength" required
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="e.g., 500mg, 10ml, 5%">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Stock Information -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-                        <i class="fas fa-boxes mr-2 text-green-500"></i>Stock Information
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <label for="stock" class="block text-sm font-medium text-gray-700 mb-1">
-                                Initial Stock *
-                            </label>
-                            <input type="number" name="stock" id="stock" required min="0"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-
-                        <div>
-                            <label for="unit" class="block text-sm font-medium text-gray-700 mb-1">
-                                Unit *
-                            </label>
-                            <input type="text" name="unit" id="unit" required
-                                   placeholder="e.g., tablets, ml, mg"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-
-                        <!-- CHANGE THIS: Rename min_stock_level to reorder_level and make required -->
-                        <div>
-                            <label for="reorder_level" class="block text-sm font-medium text-gray-700 mb-1">
-                                Reorder Level *
-                            </label>
-                            <input type="number" name="reorder_level" id="reorder_level" required min="0"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="Alert when stock reaches this level">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pricing Information -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-                        <i class="fas fa-tag mr-2 text-purple-500"></i>Pricing Information
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="unit_price" class="block text-sm font-medium text-gray-700 mb-1">
-                                Unit Price *
-                            </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500">$</span>
-                                </div>
-                                <input type="number" name="unit_price" id="unit_price" required step="0.01" min="0"
-                                       class="w-full pl-8 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                        </div>
-                        <div>
-                            <label for="selling_price" class="block text-sm font-medium text-gray-700 mb-1">
-                                Selling Price *
-                            </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500">$</span>
-                                </div>
-                                <input type="number" name="selling_price" id="selling_price" required step="0.01"
-                                       min="0"
-                                       class="w-full pl-8 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Additional Details -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-                        <i class="fas fa-notes-medical mr-2 text-orange-500"></i>Additional Details
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="batch_number" class="block text-sm font-medium text-gray-700 mb-1">
-                                Batch Number
-                            </label>
-                            <input type="text" name="batch_number" id="batch_number"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label for="expiry_date" class="block text-sm font-medium text-gray-700 mb-1">
-                                Expiry Date
-                            </label>
-                            <input type="date" name="expiry_date" id="expiry_date"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-
-                        <!-- ADD THIS: Storage Conditions -->
-                        <div>
-                            <label for="storage_conditions" class="block text-sm font-medium text-gray-700 mb-1">
-                                Storage Conditions
-                            </label>
-                            <input type="text" name="storage_conditions" id="storage_conditions"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="e.g., Room temperature, Refrigerated">
-                        </div>
-
-                        <!-- ADD THIS: Prescription Requirement -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Prescription Requirement
-                            </label>
-                            <div class="flex items-center space-x-4">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="requires_prescription" value="1"
-                                           class="form-radio text-blue-600">
-                                    <span class="ml-2 text-gray-700">Requires Prescription</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="requires_prescription" value="0" checked
-                                           class="form-radio text-blue-600">
-                                    <span class="ml-2 text-gray-700">Over-the-Counter</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
-                                Description
-                            </label>
-                            <textarea name="description" id="description" rows="3"
-                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Form Actions -->
-                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-                    <a href="{{ route('pharmacy.inventory') }}"
-                       class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-                        Cancel
-                    </a>
-                    <button type="submit"
-                            class="px-8 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-medium hover:shadow-lg transition-all">
-                        <i class="fas fa-plus-circle mr-2"></i> Add Medicine
-                    </button>
-                </div>
-            </form>
+<div class="max-w-4xl mx-auto animate-fade-in" x-data="{ medicineId: '{{ $selectedMedicine->id ?? '' }}' }">
+    <div class="flex items-center gap-4 mb-8">
+        <a href="{{ $selectedMedicine ? route('pharmacy.medicines.show', $selectedMedicine) : route('pharmacy.inventory') }}" class="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-100 transition-all shadow-sm">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="text-3xl font-black text-slate-800 leading-tight">Add Inventory Stock</h2>
+            <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-1">Register a new batch or restock existing medicine</p>
         </div>
     </div>
+
+    @if(session('error'))
+        <div class="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-600 font-bold text-sm flex items-center gap-3">
+            <i class="fas fa-exclamation-circle"></i>
+            {{ session('error') }}
+        </div>
+    @endif
+
+    <form action="{{ route('pharmacy.inventory.store') }}" method="POST" class="space-y-6">
+        @csrf
+        
+        <!-- Medicine Selection -->
+        <div class="bg-white rounded-[2rem] p-8 shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full translate-x-16 -translate-y-16 opacity-50"></div>
+            
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-8 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                Medicine Identification
+            </h3>
+            
+            <div class="space-y-2 relative z-10">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Select Medicine *</label>
+                @if($selectedMedicine)
+                    <div class="flex items-center gap-4 p-5 bg-blue-50/50 border border-blue-100 rounded-2xl group transition-all">
+                        <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-200/50">
+                            <i class="fas fa-pills text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-black text-slate-800">{{ $selectedMedicine->name }}</h4>
+                            <p class="text-[10px] text-blue-600 font-bold uppercase tracking-wider">{{ $selectedMedicine->generic_name }}</p>
+                        </div>
+                        <input type="hidden" name="medicine_id" value="{{ $selectedMedicine->id }}">
+                    </div>
+                @else
+                    <select name="medicine_id" x-model="medicineId" required class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700 appearance-none">
+                        <option value="">Choose medicine...</option>
+                        @foreach($medicines as $medicine)
+                            <option value="{{ $medicine->id }}" {{ old('medicine_id') == $medicine->id ? 'selected' : '' }}>
+                                {{ $medicine->name }} ({{ $medicine->generic_name }})
+                            </option>
+                        @endforeach
+                    </select>
+                @endif
+                @error('medicine_id') <p class="text-rose-500 text-xs font-bold mt-1 ml-1">{{ $message }}</p> @enderror
+            </div>
+        </div>
+
+        <!-- Batch Details -->
+        <div class="bg-white rounded-[2rem] p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-8 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                Batch Specifications
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Batch Number *</label>
+                    <input type="text" name="batch_number" value="{{ old('batch_number') }}" required placeholder="e.g. B24-409" 
+                        class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700 placeholder:font-medium">
+                    @error('batch_number') <p class="text-rose-500 text-xs font-bold mt-1 ml-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Expiry Date *</label>
+                    <input type="date" name="expiry_date" value="{{ old('expiry_date') }}" required 
+                        class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700">
+                    @error('expiry_date') <p class="text-rose-500 text-xs font-bold mt-1 ml-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Quantity to Add *</label>
+                    <input type="number" name="quantity" value="{{ old('quantity') }}" required min="1" placeholder="0" 
+                        class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700">
+                    @error('quantity') <p class="text-rose-500 text-xs font-bold mt-1 ml-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">RC number</label>
+                    <input type="text" name="rc_number" value="{{ old('rc_number') }}" placeholder="e.g. RC-2024-X" 
+                        class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700 placeholder:font-medium">
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing Details -->
+        <div class="bg-white rounded-[2rem] p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-8 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Commercial Value
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Unit Cost Price *</label>
+                    <div class="relative">
+                        <span class="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm">Rs.</span>
+                        <input type="number" name="unit_price" value="{{ old('unit_price') }}" required min="0" step="0.01" placeholder="0.00" 
+                            class="w-full pl-12 pr-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Retail Sale Price *</label>
+                    <div class="relative">
+                        <span class="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm">Rs.</span>
+                        <input type="number" name="sale_price" value="{{ old('sale_price') }}" required min="0" step="0.01" placeholder="0.00" 
+                            class="w-full pl-12 pr-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Batch Notes</label>
+                <textarea name="notes" rows="3" placeholder="Storage instructions, special handling, or supplier notes..." 
+                    class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium text-slate-700 placeholder:text-slate-400">{{ old('notes') }}</textarea>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-4 pb-10">
+            <a href="{{ route('pharmacy.inventory') }}" class="px-8 py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold hover:bg-slate-200 transition-all">Cancel</a>
+            <button type="submit" class="px-12 py-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl font-black shadow-lg shadow-blue-200/50 hover:shadow-xl transition-all">
+                Authorize Stock Entry
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
 @endsection

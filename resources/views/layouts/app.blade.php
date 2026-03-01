@@ -601,8 +601,8 @@
                                     <i class="fas fa-boxes w-6 text-center"></i>
                                     <span class="ml-2">Inventory</span>
                                 </a>
-                                <a href="{{ route('pharmacy.alerts') }}"
-                                    class="flex items-center px-3 py-2 text-sm rounded-xl hover:bg-amber-50 {{ request()->routeIs('pharmacy.alerts') ? 'text-amber-600 bg-amber-50' : 'text-slate-600' }}">
+                                <a href="{{ route('pharmacy.alerts.index') }}"
+                                    class="flex items-center px-3 py-2 text-sm rounded-xl hover:bg-amber-50 {{ request()->routeIs('pharmacy.alerts.*') ? 'text-amber-600 bg-amber-50' : 'text-slate-600' }}">
                                     <i class="fas fa-exclamation-triangle w-6 text-center"></i>
                                     <span class="ml-2">Alerts</span>
                                     @php
@@ -619,7 +619,7 @@
                                     @endif
                                 </a>
                                 <a href="{{ route('pharmacy.dispense.history') }}"
-                                    class="flex items-center px-3 py-2 text-sm rounded-xl hover:bg-amber-50 {{ request()->routeIs('pharmacy.dispense.history') ? 'text-amber-600 bg-amber-50' : 'text-slate-600' }}">
+                                   class="flex items-center px-3 py-2 text-sm rounded-xl hover:bg-amber-50 {{ request()->routeIs('pharmacy.dispense.history') ? 'text-amber-600 bg-amber-50' : 'text-slate-600' }}">
                                     <i class="fas fa-history w-6 text-center"></i>
                                     <span class="ml-2">History</span>
                                 </a>
@@ -702,7 +702,7 @@
         </aside>
 
         <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50">
             <!-- Header -->
             <header class="h-20 bg-white/80 backdrop-blur-xl sticky top-0 z-30 border-b border-slate-200 shadow-sm">
                 <div class="px-6 h-full flex justify-between items-center">

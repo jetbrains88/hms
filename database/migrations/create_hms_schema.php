@@ -1,4 +1,5 @@
 <?php
+// database/migrations/2026_03_01_000001_create_hms_complete_schema.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -16,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->string('name');
-            $table->string('type');
+            $table->string('type'); // Region, Zone, Sector, PLHQ, Beat
             $table->foreignId('parent_id')->nullable()->constrained('offices')->cascadeOnDelete();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
@@ -52,7 +53,7 @@ return new class extends Migration
         });
 
         // =========================================================================
-        // 3. ROLES & PERMISSIONS (roles now depend on branches)
+        // 3. ROLES & PERMISSIONS
         // =========================================================================
         Schema::create('roles', function (Blueprint $table) {
             $table->id();
@@ -81,7 +82,7 @@ return new class extends Migration
         });
 
         // =========================================================================
-        // 4. USERS & ACCESS (users independent)
+        // 4. USERS & ACCESS
         // =========================================================================
         Schema::create('users', function (Blueprint $table) {
             $table->id();
@@ -214,6 +215,7 @@ return new class extends Migration
             $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
             $table->foreignId('medicine_id')->constrained()->cascadeOnDelete();
             $table->string('batch_number');
+            $table->string('rc_number', 100)->nullable(); // Receipt/Challan number
             $table->date('expiry_date');
             $table->decimal('unit_price', 10, 2);
             $table->decimal('sale_price', 10, 2)->nullable();
@@ -296,7 +298,7 @@ return new class extends Migration
         });
 
         // =========================================================================
-        // 8. PRESCRIPTIONS
+        // 8. PRESCRIPTIONS (with enhanced frequency fields)
         // =========================================================================
         Schema::create('prescriptions', function (Blueprint $table) {
             $table->id();
@@ -305,9 +307,15 @@ return new class extends Migration
             $table->foreignId('diagnosis_id')->constrained()->cascadeOnDelete();
             $table->foreignId('medicine_id')->constrained()->restrictOnDelete();
             $table->foreignId('prescribed_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('dosage');
-            $table->integer('frequency');
-            $table->string('duration');
+            
+            // Time-specific dosage fields
+            $table->unsignedTinyInteger('morning')->default(0);
+            $table->unsignedTinyInteger('evening')->default(0);
+            $table->unsignedTinyInteger('night')->default(0);
+            
+            // Duration in days (renamed from duration)
+            $table->string('days');
+            
             $table->integer('quantity');
             $table->enum('status', ['pending', 'partially_dispensed', 'completed', 'cancelled'])->default('pending');
             $table->text('instructions')->nullable();
@@ -554,7 +562,10 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Drop in reverse order of creation
+        // Drop views first
+        DB::statement("DROP VIEW IF EXISTS medicine_stock_value");
+        
+        // Drop tables in reverse order of creation (respecting foreign key constraints)
         Schema::dropIfExists('notifications');
         Schema::dropIfExists('audit_log_details');
         Schema::dropIfExists('audit_logs');
@@ -587,6 +598,5 @@ return new class extends Migration
         Schema::dropIfExists('branches');
         Schema::dropIfExists('designations');
         Schema::dropIfExists('offices');
-        DB::statement("DROP VIEW IF EXISTS medicine_stock_value");
     }
 };
