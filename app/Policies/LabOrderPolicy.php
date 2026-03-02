@@ -27,7 +27,7 @@ class LabOrderPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasPermission('create_lab_orders');
+        return $user->hasPermission('create_lab_reports');
     }
 
     public function process(User $user, LabOrder $labOrder): bool

@@ -308,6 +308,9 @@ return new class extends Migration
             $table->foreignId('medicine_id')->constrained()->restrictOnDelete();
             $table->foreignId('prescribed_by')->nullable()->constrained('users')->nullOnDelete();
             
+            $table->string('dosage')->nullable();
+            $table->integer('frequency')->nullable();
+            
             // Time-specific dosage fields
             $table->unsignedTinyInteger('morning')->default(0);
             $table->unsignedTinyInteger('evening')->default(0);

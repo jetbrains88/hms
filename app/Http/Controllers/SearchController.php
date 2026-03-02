@@ -94,7 +94,7 @@ class SearchController extends Controller
                         'id' => $visit->id,
                         'title' => 'Visit: ' . $visit->queue_token,
                         'subtitle' => $visit->patient->name . ' | ' . $visit->status,
-                        'url' => route('visits.show', $visit),
+                        'url' => route('reception.visits.show', $visit),
                         'icon' => 'clipboard',
                     ];
                 });

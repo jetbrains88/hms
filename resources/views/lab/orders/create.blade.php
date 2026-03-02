@@ -444,6 +444,7 @@
                 touched: {
                     patient_id: false,
                     doctor_id: false,
+                    lab_test_type_id: false,
                     test_name: false,
                     test_type: false,
                     sample_type: false,
@@ -454,10 +455,11 @@
                     visit_id: null,
                     doctor_id: null,
                     technician_id: null,
+                    lab_test_type_id: '',
                     test_name: '',
-                    lab_number: '',
                     test_type: '',
                     sample_type: '',
+                    lab_number: '',
                     priority: 'normal',
                     notes: '',
                     sample_collected_at: '',
@@ -468,8 +470,6 @@
                     sample_condition: '',
                     special_instructions: ''
                 },
-
-                    // Add these to the labReportForm Alpine data object
 
                 // Store test type IDs mapping
                 testTypeIds: {},
@@ -530,10 +530,10 @@
                         }, 10);
                         
                         this.checkOptimization();
-                        this.showNotification('Test template applied successfully!', 'success');
+                        showNotification('Test template applied successfully!', 'success');
                     } else {
                         console.warn('Test type ID not found for:', template.name);
-                        this.showNotification('Could not find matching test type', 'error');
+                        showNotification('Could not find matching test type', 'error');
                     }
                 },
 
@@ -558,8 +558,19 @@
                     }
                 },
 
-                isStep2Valid() {
-                    return this.form.lab_test_type_id && this.form.priority;
+                checkOptimization() {
+                    const optimizedTests = ['Special Chemistry', 'Urine Routine Examination'];
+                    this.isOptimizedTest = optimizedTests.includes(this.form.test_name);
+                },
+
+                generateSampleId() {
+                    const date = new Date();
+                    const year = date.getFullYear().toString().slice(-2);
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+
+                    this.form.sample_id = `SMP-${year}${month}${day}-${random}`;
                 },
 
                 // --- Validation Methods ---
@@ -569,7 +580,7 @@
                 },
 
                 isStep2Valid() {
-                    return this.form.test_name && this.form.test_type && this.form.sample_type;
+                    return this.form.lab_test_type_id && this.form.priority;
                 },
 
                 isFormValid() {
@@ -582,6 +593,7 @@
                         this.touched.patient_id = true;
                         this.touched.doctor_id = true;
                     } else if (stepNumber === 2) {
+                        this.touched.lab_test_type_id = true;
                         this.touched.test_name = true;
                         this.touched.test_type = true;
                         this.touched.sample_type = true;
@@ -650,50 +662,6 @@
                     this.patientVisits = [];
                 },
 
-                // --- Template & Optimization ---
-
-                applyTemplate(template) {
-                    this.form.test_name = template.name;
-                    this.form.test_type = template.test_type;
-                    this.form.sample_type = template.sample_type;
-                    // Mark as touched since values are programmatically set
-                    this.touched.test_name = true;
-                    this.touched.test_type = true;
-                    this.touched.sample_type = true;
-                    this.checkOptimization();
-                    showNotification('Test template applied successfully!', 'success');
-                },
-
-                updateTestDetails(option) {
-                    if (!option || !option.value) return;
-                    
-                    this.form.lab_test_type_id = option.value;
-                    this.form.test_name = option.dataset.name;
-                    this.form.test_type = option.dataset.type;
-                    
-                    // Mark as touched
-                    this.touched.lab_test_type_id = true;
-                    this.touched.test_name = true;
-                    this.touched.test_type = true;
-                    
-                    this.checkOptimization();
-                },
-
-                checkOptimization() {
-                    const optimizedTests = ['Special Chemistry', 'Urine Routine Examination'];
-                    this.isOptimizedTest = optimizedTests.includes(this.form.test_name);
-                },
-
-                generateSampleId() {
-                    const date = new Date();
-                    const year = date.getFullYear().toString().slice(-2);
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-
-                    this.form.sample_id = `SMP-${year}${month}${day}-${random}`;
-                },
-
                 // --- Submission ---
 
                 async saveAsDraft() {
@@ -721,6 +689,8 @@
                             test_type_ids: [this.form.lab_test_type_id],
                             priority: this.form.priority,
                             comments: this.form.notes,
+                            technician_id: this.form.technician_id,
+                            doctor_id: this.form.doctor_id,
                         };
 
                         const response = await fetch('{{ route("lab.orders.store") }}', {

@@ -18,7 +18,7 @@ class AuditLogController extends Controller
 
         // Apply filters
         if ($request->filled('entity_type')) {
-            $query->where('entity_type', 'LIKE', '%' . $request->entity_type . '%');
+            $query->where('entity_type', $request->entity_type);
         }
 
         if ($request->filled('action')) {
@@ -69,7 +69,7 @@ class AuditLogController extends Controller
 
         // Apply same filters as index
         if ($request->filled('entity_type')) {
-            $query->where('entity_type', 'LIKE', '%' . $request->entity_type . '%');
+            $query->where('entity_type', $request->entity_type);
         }
 
         if ($request->filled('action')) {
@@ -107,5 +107,71 @@ class AuditLogController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="audit-log-' . now()->format('Y-m-d') . '.csv"',
         ]);
+    }
+
+    /**
+     * Get audit log statistics
+     */
+    public function stats()
+    {
+        $stats = [
+            'total' => AuditLog::count(),
+            'created' => AuditLog::where('action', 'created')->count(),
+            'updated' => AuditLog::where('action', 'updated')->count(),
+            'deleted' => AuditLog::where('action', 'deleted')->count(),
+        ];
+
+        return response()->json($stats);
+    }
+
+    /**
+     * Get paginated audit data for AJAX table
+     */
+    public function data(Request $request)
+    {
+        $query = AuditLog::with(['user', 'branch', 'details']);
+
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('entity_type', 'LIKE', "%{$search}%")
+                    ->orWhere('ip_address', 'LIKE', "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'LIKE', "%{$search}%")
+                           ->orWhere('email', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        // Apply filters
+        if ($request->filled('entity_type')) {
+            $query->where('entity_type', $request->entity_type);
+        }
+
+        if ($request->filled('action')) {
+            $query->where('action', $request->action);
+        }
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        if ($request->filled('branch_id')) {
+            $query->where('branch_id', $request->branch_id);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $perPage = $request->get('per_page', 20);
+        $logs = $query->orderByDesc('created_at')->paginate($perPage);
+
+        return response()->json($logs);
     }
 }

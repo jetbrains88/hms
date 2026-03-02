@@ -179,7 +179,7 @@ class DiagnosisPolicy
      */
     public function addLabOrder(User $user, Diagnosis $diagnosis): bool
     {
-        if (!$user->hasPermission('create_lab_orders')) {
+        if (!$user->hasPermission('create_lab_reports')) {
             return false;
         }
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Lab\StoreLabOrderRequest;
 use App\Http\Requests\Lab\VerifyOrderRequest;
 use App\Models\LabOrder;
+use App\Models\LabOrderItem;
 use App\Models\Patient;
 use App\Models\Visit;
 use App\Interfaces\LabReportRepositoryInterface;

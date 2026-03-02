@@ -40,13 +40,13 @@ class MedicineCategory extends Model
     // Add this scope method
     public function scopeActive($query)
     {
-        return $query->where('is_active', 'active');
+        return $query->where('is_active', true);
     }
 
     // Optional: Add an inactive scope too
     public function scopeInactive($query)
     {
-        return $query->where('is_active', 'inactive');
+        return $query->where('is_active', false);
     }
 
     /**

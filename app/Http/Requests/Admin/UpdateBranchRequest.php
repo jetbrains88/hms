@@ -4,12 +4,12 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreBranchRequest extends FormRequest
+class UpdateBranchRequest extends FormRequest
 {
     public function authorize(): bool
     {
         $user = auth()->user();
-        return $user->hasRole('super_admin') || $user->hasPermission('create_branches');
+        return $user->hasRole('super_admin') || $user->hasPermission('edit_branches');
     }
 
     public function rules(): array

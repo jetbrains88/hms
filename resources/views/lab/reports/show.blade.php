@@ -61,7 +61,7 @@
                         </div>
                     </div>
                     <div class="flex space-x-4">
-                        <a href="{{ route('lab.orders.edit', $labOrder->id) }}"
+                        <a href="{{ route('lab.results.edit', $labOrder->id) }}"
                             class="bg-yellow-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-shadow duration-300">
                             <i class="fas fa-edit mr-2"></i>Edit
                         </a>
@@ -555,7 +555,7 @@
                             this.showConfirmModal = false;
 
                             try {
-                                const url = '{{ route("lab.orders.update", $labOrder->id) }}';
+                                const url = '{{ route("lab.results.update", $labOrder->id) }}';
                                 const response = await fetch(url, {
                                     method: 'PUT',
                                     headers: {
@@ -587,7 +587,7 @@
                             this.showVerifyModal = false;
 
                             try {
-                                const url = '{{ route("lab.orders.verify", $labOrder->id) }}';
+                                const url = '{{ route("lab.results.verify", $labOrder->id) }}';
                                 const response = await fetch(url, {
                                     method: 'POST',
                                     headers: {

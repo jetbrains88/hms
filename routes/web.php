@@ -184,6 +184,8 @@ Route::middleware(['auth', 'role:super_admin,admin'])->prefix('admin')->name('ad
     Route::resource('permissions', PermissionController::class)->except(['show']);
 
     // Branch Management
+    Route::get('branches/stats', [BranchController::class, 'stats'])->name('branches.stats');
+    Route::get('branches/data', [BranchController::class, 'data'])->name('branches.data');
     Route::resource('branches', BranchController::class);
     Route::post('/branches/{branch}/toggle-status', [BranchController::class, 'toggleStatus'])
         ->name('branches.toggle-status');
@@ -197,6 +199,8 @@ Route::middleware(['auth', 'role:super_admin,admin'])->prefix('admin')->name('ad
     Route::resource('designations', DesignationController::class);
 
     // Audit Logs
+    Route::get('/audit-logs/stats', [AuditLogController::class, 'stats'])->name('audit.stats');
+    Route::get('/audit-logs/data', [AuditLogController::class, 'data'])->name('audit.data');
     Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit.index');
     Route::get('/audit-logs/export', [AuditLogController::class, 'export'])->name('audit.export');
     Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit.show');
@@ -365,6 +369,8 @@ Route::middleware(['auth', 'role:pharmacy'])->prefix('pharmacy')->name('pharmacy
     Route::get('/inventory/batch/{batch}', [InventoryController::class, 'showBatch'])->name('inventory.batch');
     Route::post('/inventory/batch/{batch}/add-stock', [InventoryController::class, 'addStock'])
         ->name('inventory.add-stock');
+    Route::get('/inventory/batch/{batch}/adjust', [InventoryController::class, 'adjustForm'])
+        ->name('inventory.adjust-form');
     Route::post('/inventory/batch/{batch}/adjust', [InventoryController::class, 'adjust'])
         ->name('inventory.adjust');
     Route::get('/inventory/transfer/{batch}', [InventoryController::class, 'transferForm'])

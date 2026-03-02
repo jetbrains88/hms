@@ -183,11 +183,13 @@ class InventoryController extends Controller
             
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('medicine', function($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('code', 'LIKE', "%{$search}%")
-                  ->orWhere('brand', 'LIKE', "%{$search}%");
-            })->orWhere('batch_number', 'LIKE', "%{$search}%");
+            $query->where(function($q) use ($search) {
+                $q->whereHas('medicine', function($mq) use ($search) {
+                    $mq->where('name', 'LIKE', "%{$search}%")
+                      ->orWhere('code', 'LIKE', "%{$search}%")
+                      ->orWhere('brand', 'LIKE', "%{$search}%");
+                })->orWhere('batch_number', 'LIKE', "%{$search}%");
+            });
         }
         
         if ($request->filled('category') && $request->category !== 'All') {
@@ -203,6 +205,10 @@ class InventoryController extends Controller
                 });
             } elseif ($request->stock_status === 'out') {
                 $query->where('medicine_batches.remaining_quantity', '<=', 0);
+            } elseif ($request->stock_status === 'near_expiry') {
+                $query->where('expiry_date', '<=', now()->addDays(30))
+                      ->where('expiry_date', '>=', now())
+                      ->where('remaining_quantity', '>', 0);
             }
         }
         
@@ -247,7 +253,7 @@ class InventoryController extends Controller
                     'unit_price' => number_format($batch->unit_price, 2),
                     'sale_price' => number_format($batch->sale_price, 2),
                     'view_url' => route('pharmacy.inventory.batch', $batch->id),
-                    'edit_url' => route('pharmacy.inventory.adjust', $batch->id),
+                    'edit_url' => route('pharmacy.inventory.adjust-form', $batch->id),
                 ];
             }
             
@@ -272,7 +278,7 @@ class InventoryController extends Controller
                 'unit_price' => number_format($batch->unit_price, 2),
                 'sale_price' => number_format($batch->sale_price, 2),
                 'view_url' => route('pharmacy.inventory.batch', $batch->id),
-                'edit_url' => route('pharmacy.inventory.adjust', $batch->id),
+                'edit_url' => route('pharmacy.inventory.adjust-form', $batch->id),
             ];
         });
         
@@ -289,12 +295,14 @@ class InventoryController extends Controller
             'stats' => [
                 'total' => MedicineBatch::where('branch_id', $branchId)->count(),
                 'low_stock' => MedicineBatch::where('branch_id', $branchId)
-                    ->join('medicines', 'medicine_batches.medicine_id', '=', 'medicines.id')
-                    ->whereColumn('medicine_batches.remaining_quantity', '<=', 'medicines.reorder_level')
+                    ->whereHas('medicine', function($q) {
+                        $q->whereColumn('medicine_batches.remaining_quantity', '<=', 'medicines.reorder_level');
+                    })
                     ->count(),
                 'out_of_stock' => MedicineBatch::where('branch_id', $branchId)->where('remaining_quantity', '<=', 0)->count(),
                 'near_expiry' => MedicineBatch::where('branch_id', $branchId)
                     ->where('expiry_date', '<=', now()->addDays(30))
+                    ->where('expiry_date', '>=', now())
                     ->where('remaining_quantity', '>', 0)
                     ->count(),
             ]

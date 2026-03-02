@@ -77,6 +77,17 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'edit_designations', 'group' => 'designations', 'display_name' => 'Edit Designations'],
             ['name' => 'delete_designations', 'group' => 'designations', 'display_name' => 'Delete Designations'],
 
+            // ============ BRANCH MANAGEMENT ============
+            ['name' => 'view_branches', 'group' => 'branches', 'display_name' => 'View Branches'],
+            ['name' => 'create_branches', 'group' => 'branches', 'display_name' => 'Create Branches'],
+            ['name' => 'edit_branches', 'group' => 'branches', 'display_name' => 'Edit Branches'],
+            ['name' => 'delete_branches', 'group' => 'branches', 'display_name' => 'Delete Branches'],
+            ['name' => 'toggle_branch_status', 'group' => 'branches', 'display_name' => 'Toggle Branch Status'],
+
+            // ============ AUDIT TRAILS ============
+            ['name' => 'view_audit_logs', 'group' => 'audit', 'display_name' => 'View Audit Logs'],
+            ['name' => 'export_audit_logs', 'group' => 'audit', 'display_name' => 'Export Audit Logs'],
+
             // ============ PATIENT MANAGEMENT ============
             ['name' => 'view_patients', 'group' => 'patients', 'display_name' => 'View Patients'],
             ['name' => 'create_patients', 'group' => 'patients', 'display_name' => 'Create Patients'],
@@ -234,6 +245,17 @@ class RolePermissionSeeder extends Seeder
                 'create_designations',
                 'edit_designations',
                 'delete_designations',
+
+                // Branch Management
+                'view_branches',
+                'create_branches',
+                'edit_branches',
+                'delete_branches',
+                'toggle_branch_status',
+
+                // Audit Logs
+                'view_audit_logs',
+                'export_audit_logs',
 
                 // Patient Management
                 'view_patients',
