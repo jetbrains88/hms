@@ -23,24 +23,31 @@ class QueueController extends Controller
     {
         $branchId = $branchId ?? auth()->user()->current_branch_id;
         
-        $waitingQueue = $this->visitService->getQueue($branchId, 'waiting');
-        $inProgress = $this->visitService->getQueue($branchId, 'in_progress');
+        // Fetch all relevant visits for today to provide a unified collection for the view
+        $visits = Visit::with(['patient', 'doctor'])
+            ->where('branch_id', $branchId)
+            ->whereDate('created_at', today())
+            ->whereIn('status', ['waiting', 'in_progress', 'completed'])
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $waitingQueue = $visits->where('status', 'waiting');
+        $inProgress = $visits->where('status', 'in_progress');
         
         // For public view, don't show sensitive patient info
         if (!$request->user()) {
-            $waitingQueue->makeHidden(['patient.cnic', 'patient.phone', 'patient.address']);
-            $inProgress->makeHidden(['patient.cnic', 'patient.phone', 'patient.address']);
+            $visits->makeHidden(['patient.cnic', 'patient.phone', 'patient.address']);
         }
         
         if ($request->wantsJson()) {
             return response()->json([
-                'waiting' => $waitingQueue,
-                'in_progress' => $inProgress,
+                'waiting' => $waitingQueue->values(),
+                'in_progress' => $inProgress->values(),
                 'updated_at' => now()->toIso8601String(),
             ]);
         }
         
-        return view('reception.queue.live', compact('waitingQueue', 'inProgress', 'branchId'));
+        return view('reception.queue.live', compact('visits', 'waitingQueue', 'inProgress', 'branchId'));
     }
 
     /**

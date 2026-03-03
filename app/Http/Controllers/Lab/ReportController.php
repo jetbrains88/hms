@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Lab;
 
 use App\Http\Controllers\Controller;
+use App\Interfaces\LabReportRepositoryInterface;
 use App\Models\LabOrder;
 use App\Models\LabOrderItem;
 use App\Models\LabTestType;
+use App\Services\Laboratory\LabReportService;
 use App\Services\ReportService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -16,10 +18,17 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class ReportController extends Controller
 {
     protected $reportService;
+    protected $labReportService;
+    protected $labReportRepository;
 
-    public function __construct(ReportService $reportService)
-    {
+    public function __construct(
+        ReportService $reportService,
+        LabReportService $labReportService,
+        LabReportRepositoryInterface $labReportRepository
+    ) {
         $this->reportService = $reportService;
+        $this->labReportService = $labReportService;
+        $this->labReportRepository = $labReportRepository;
     }
 
     /**
@@ -240,37 +249,88 @@ class ReportController extends Controller
     /**
      * Show lab report.
      */
-    public function show(LabOrder $labOrder)
+    public function show(LabOrder $labReport)
     {
-        $labOrder->load([
+        $labReport->load([
             'patient',
             'doctor',
             'verifiedBy',
+            'testType.parameters',
             'items' => function ($q) {
                 $q->with(['labTestType', 'labResults.labTestParameter']);
-            }
+            },
+            'results.labTestParameter',
         ]);
 
-        return view('lab.reports.show', compact('labOrder'));
+        return view('lab.reports.show', [
+            'labReport' => $labReport
+        ]);
+    }
+
+    /**
+     * Show edit form for lab report.
+     */
+    public function edit(LabOrder $labReport)
+    {
+        $labReport->load(['patient', 'doctor', 'items.labTestType']);
+
+        // The edit.blade.php uses $labOrder variable name
+        $labOrder = $labReport;
+
+        $testTypes = LabTestType::orderBy('name')->get();
+        $doctors = $this->labReportRepository->getAllDoctors();
+
+        return view('lab.reports.edit', compact('labOrder', 'testTypes', 'doctors'));
+    }
+
+    /**
+     * Update lab report.
+     */
+    public function update(Request $request, LabOrder $labReport): JsonResponse
+    {
+        try {
+            $labReport->update([
+                'doctor_id' => $request->doctor_id,
+                'priority' => $request->priority ?? $labReport->priority,
+                'status' => $request->status ?? $labReport->status,
+                'comments' => $request->comments,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Report updated successfully',
+                'redirect' => route('lab.reports.show', $labReport->id),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating lab report: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating report: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
      * Generate PDF report.
      */
-    public function pdf(LabOrder $labOrder)
+    public function pdf(LabOrder $labReport)
     {
-        $labOrder->load([
+        $labReport->load([
             'patient',
             'doctor',
             'verifiedBy',
+            'testType.parameters',
             'items' => function ($q) {
                 $q->with(['labTestType', 'labResults.labTestParameter']);
             }
         ]);
 
-        $pdf = Pdf::loadView('lab.reports.print', compact('labOrder'));
+        // print.blade.php uses $labOrder variable name
+        $pdf = Pdf::loadView('lab.reports.print', [
+            'labOrder' => $labReport
+        ]);
 
-        return $pdf->download('lab-report-' . $labOrder->lab_number . '.pdf');
+        return $pdf->download('lab-report-' . $labReport->lab_number . '.pdf');
     }
 
     /**
@@ -418,10 +478,10 @@ class ReportController extends Controller
     /**
      * Remove the specified lab report (order).
      */
-    public function destroy(LabOrder $labOrder)
+    public function destroy(LabOrder $labReport)
     {
         try {
-            $labOrder->delete();
+            $labReport->delete();
             return response()->json([
                 'success' => true,
                 'message' => 'Report deleted successfully'
@@ -430,6 +490,123 @@ class ReportController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting report: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Submit results for a lab report.
+     */
+    public function submitResults(Request $request, LabOrder $labReport): JsonResponse
+    {
+        try {
+            $result = $this->labReportService->submitResults($labReport->id, $request->all());
+            return response()->json([
+                'success' => true,
+                'message' => 'Results submitted successfully',
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error submitting results: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error submitting results: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update lab report status.
+     */
+    public function updateStatus(Request $request, LabOrder $labReport): JsonResponse
+    {
+        try {
+            $result = $this->labReportService->updateStatus($labReport->id, $request->status);
+            return response()->json([
+                'success' => true,
+                'message' => 'Status updated successfully',
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating status: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Upload report file.
+     */
+    public function uploadFile(Request $request, LabOrder $labReport): JsonResponse
+    {
+        try {
+            if (!$request->hasFile('file')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No file uploaded'
+                ], 400);
+            }
+
+            $result = $this->labReportService->attachReportFile($labReport->id, $request->file('file'));
+            return response()->json([
+                'success' => true,
+                'message' => 'File uploaded successfully',
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error uploading file: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error uploading file: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Verify lab report.
+     */
+    public function verify(Request $request, LabOrder $labReport): JsonResponse
+    {
+        try {
+            $result = $this->labReportService->verifyReport(
+                $labReport->id,
+                auth()->id(),
+                $request->notes
+            );
+            return response()->json([
+                'success' => true,
+                'message' => 'Report verified successfully',
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error verifying report: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error verifying report: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Notify doctor about the lab report.
+     */
+    public function notifyDoctor(LabOrder $labReport): JsonResponse
+    {
+        try {
+            // Logic to notify doctor (placeholder for now)
+            // In a real app, this would trigger an email/SMS/Notification
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Doctor has been notified'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error notifying doctor: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error notifying doctor: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -31,8 +31,8 @@
                         <h1 class="text-3xl font-bold text-gray-900">Lab Report Details</h1>
                         <div class="flex items-center mt-2 space-x-6">
                             <span class="text-gray-600">Lab Number: <strong>{{ $labReport->lab_number }}</strong></span>
+                            <span class="text-gray-600">Test: <strong>{{ $labReport->test_name }}</strong></span>
                             @if ($labReport->testType)
-                                <span class="text-gray-600">Test: <strong>{{ $labReport->testType->name }}</strong></span>
                                 <span class="text-gray-600">Department:
                                     <strong>{{ $labReport->testType->department }}</strong></span>
                             @endif
@@ -178,7 +178,7 @@
                                                         {{ $resultValue }}
                                                     </td>
                                                     <td class="px-4 py-3 text-sm text-gray-600 overflow-wrap: break-word;">
-                                                        {{ $refRange }}
+                                                        {!! nl2br(e($refRange)) !!}
                                                     </td>
                                                     @if ($showUnits)
                                                         <td class="px-4 py-3 text-sm text-gray-600">
@@ -244,8 +244,39 @@
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Parameters to be
                                             added</label>
-                                        <div id="resultsContainer">
-                                            <!-- Dynamic results fields will be added here -->
+                                        <div id="resultsContainer" class="space-y-4">
+                                            <template x-for="(field, index) in resultFields" :key="field.id">
+                                                <div class="grid grid-cols-1 gap-4 mb-4"
+                                                    :class="showUnits ? 'md:grid-cols-4' : 'md:grid-cols-3'">
+                                                    <input type="hidden" name="parameters[]" x-model="field.parameter">
+                                                    <input type="hidden" name="parameter_ids[]"
+                                                        x-model="field.parameterId">
+
+                                                    <div
+                                                        class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 font-medium">
+                                                        <span x-text="field.parameter"></span>
+                                                    </div>
+
+                                                    <input type="text" name="results[]" placeholder="Result"
+                                                        x-model="field.result"
+                                                        class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+
+                                                    <div
+                                                        class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 text-sm">
+                                                        <span x-text="field.normalRange || 'N/A'"></span>
+                                                    </div>
+
+                                                    <template x-if="showUnits">
+                                                        <div
+                                                            class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 text-sm">
+                                                            <span x-text="field.unit || 'N/A'"></span>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                            <div x-show="resultFields.length === 0" class="text-gray-500 italic p-4">
+                                                No parameters found for this test.
+                                            </div>
                                         </div>
                                     </div>
 
@@ -584,6 +615,7 @@
                         toastMessage: '',
                         toastType: 'success',
                         showParameterWarning: false,
+                        showUnits: {{ $showUnits ? 'true' : 'false' }},
 
                         init() {
                             // Initialize with existing results if any
@@ -616,76 +648,33 @@
                             @endif
                         },
 
-                        addResultField(parameter = '', result = '', normalRange = '', unit = '', parameterId =
-                            '') {
-                            const id = 'result_' + Date.now() + Math.random();
-                            const showUnits = {{ $showUnits ? 'true' : 'false' }};
+                        addResultField(parameter = '', result = '', normalRange = '', unit = '',
+                            parameterId = '') {
                             this.resultFields.push({
-                                id,
+                                id: 'res_' + Math.random().toString(36).substr(2, 9),
                                 parameter,
                                 result,
                                 normalRange,
                                 unit,
                                 parameterId
                             });
-
-                            // Update DOM
-                            setTimeout(() => {
-                                const container = document.getElementById('resultsContainer');
-                                if (!container) return;
-
-                                const gridCols = showUnits ? 'md:grid-cols-4' : 'md:grid-cols-3';
-                                const template = `
-                        <div class="grid grid-cols-1 ${gridCols} gap-4 mb-4" data-id="${id}">
-                            <input type="hidden" name="parameters[]" value="${parameter}">
-                            <input type="hidden" name="parameter_ids[]" value="${parameterId}">
-
-                            <div class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 font-medium">
-                                ${parameter}
-                            </div>
-
-                            <input type="text" name="results[]" placeholder="Result"
-                                   value="${result}" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-
-                            <div class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 text-sm">
-                                ${normalRange || 'N/A'}
-                            </div>
-
-                            ${showUnits ? `
-                                                    <div class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 text-sm">
-                                                        ${unit || 'N/A'}
-                                                    </div>
-                                                    ` : ''}
-                        </div>
-                    `;
-                                container.insertAdjacentHTML('beforeend', template);
-                            });
                         },
 
                         async submitResults() {
+                            const resultValues = {};
+                            this.resultFields.forEach(field => {
+                                if (field.result !== '') {
+                                    if (field.parameterId) {
+                                        resultValues[field.parameterId] = field.result;
+                                    } else if (field.parameter) {
+                                        resultValues[field.parameter] = field.result;
+                                    }
+                                }
+                            });
+
                             const form = document.getElementById('resultsForm');
                             const formData = new FormData(form);
-
                             const fileInput = form.querySelector('input[type="file"]');
-
-                            const resultValues = {};
-
-                            const params = formData.getAll('parameters[]');
-                            const paramIds = formData.getAll('parameter_ids[]');
-                            const res = formData.getAll('results[]');
-
-                            // Prioritize finding IDs
-                            // If paramIds are present, use them. Otherwise fallback to names (legacy compatibility)
-
-                            if (res.length > 0) {
-                                res.forEach((value, index) => {
-                                    if (paramIds[index]) {
-                                        resultValues[paramIds[index]] = value;
-                                    } else if (params[index]) {
-                                        resultValues[params[index]] = value;
-                                    }
-                                });
-                            }
 
                             const payload = {
                                 result_values: resultValues,

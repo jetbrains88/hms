@@ -62,25 +62,31 @@
                             <span class="hidden sm:inline">Medical History</span>
                         </button>
 
-                        <template x-if="(currentVisit?.status === 'in_progress') || ('{{ $visit->status }}' === 'in_progress')">
-                            <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2">
+                            <template x-if="(currentVisit?.status === 'in_progress') || ('{{ $visit->status }}' === 'in_progress')">
                                 <button onclick="window.location.href='/doctor/consultancy'"
                                         class="flex items-center gap-2 px-4 py-2 bg-white text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-colors border border-gray-200 shadow-sm">
                                     <i class="fas fa-save text-gray-400"></i>
                                     <span class="hidden sm:inline">Save Draft</span>
                                 </button>
+                            </template>
+
+                            <template x-if="['in_progress', 'completed'].includes(currentVisit?.status || '{{ $visit->status }}')">
                                 <button @click="printCurrentPrescription()"
                                         class="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 font-bold rounded-xl hover:bg-indigo-100 transition-colors border border-indigo-200 shadow-sm">
                                     <i class="fas fa-print text-indigo-500"></i>
                                     <span class="hidden sm:inline">Print Rx</span>
                                 </button>
+                            </template>
+
+                            <template x-if="(currentVisit?.status === 'in_progress') || ('{{ $visit->status }}' === 'in_progress')">
                                 <button @click="completeModalOpen = true"
                                         class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-200 transition-all border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1">
                                     <i class="fas fa-check-circle"></i>
                                     <span>Complete & Print</span>
                                 </button>
-                            </div>
-                        </template>
+                            </template>
+                        </div>
                     </div>
                 </div>
             </div>

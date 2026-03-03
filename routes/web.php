@@ -417,14 +417,25 @@ Route::middleware(['auth', 'role:lab'])->prefix('lab')->name('lab.')->group(func
     Route::get('/results/edit/{orderItem}', [ResultController::class, 'edit'])->name('results.edit');
     Route::put('/results/{orderItem}', [ResultController::class, 'update'])->name('results.update');
 
-    // Reports
+    // Reports — static routes MUST come before parameterized {labReport} routes
+    Route::get('/reports', [LabReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/data', [LabReportController::class, 'getReportsData'])->name('reports.data');
     Route::get('/reports/statistics', [LabReportController::class, 'statistics'])->name('reports.statistics');
-    Route::get('/reports', [LabReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/{labOrder}', [LabReportController::class, 'show'])->name('reports.show');
-    Route::get('/reports/{labOrder}/pdf', [LabReportController::class, 'pdf'])->name('reports.pdf');
     Route::get('/reports/export/{type}', [LabReportController::class, 'export'])->name('reports.export');
-    Route::delete('/reports/{labOrder}', [LabReportController::class, 'destroy'])->name('reports.destroy');
+
+    // Parameterized routes
+    Route::get('/reports/{labReport}', [LabReportController::class, 'show'])->name('reports.show');
+    Route::get('/reports/{labReport}/edit', [LabReportController::class, 'edit'])->name('reports.edit');
+    Route::get('/reports/{labReport}/pdf', [LabReportController::class, 'pdf'])->name('reports.pdf');
+    Route::get('/reports/{labReport}/print', [LabReportController::class, 'pdf'])->name('reports.print');
+    Route::get('/reports/{labReport}/download-pdf', [LabReportController::class, 'pdf'])->name('reports.download-pdf');
+    Route::put('/reports/{labReport}', [LabReportController::class, 'update'])->name('reports.update');
+    Route::delete('/reports/{labReport}', [LabReportController::class, 'destroy'])->name('reports.destroy');
+    Route::post('/reports/{labReport}/results', [LabReportController::class, 'submitResults'])->name('reports.results');
+    Route::put('/reports/{labReport}/status', [LabReportController::class, 'updateStatus'])->name('reports.status');
+    Route::post('/reports/{labReport}/upload', [LabReportController::class, 'uploadFile'])->name('reports.upload');
+    Route::post('/reports/{labReport}/verify', [LabReportController::class, 'verify'])->name('reports.verify');
+    Route::post('/reports/{labReport}/notify-doctor', [LabReportController::class, 'notifyDoctor'])->name('reports.notify-doctor');
 
     // AJAX endpoints
     Route::get('/pending', [LabOrderController::class, 'pending'])->name('pending');

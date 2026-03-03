@@ -159,7 +159,7 @@ class LabOrder extends Model
                 $results[] = [
                     'test' => $parameter?->name ?? 'Unknown',
                     'result' => $result->display_value,
-                    'normal_range' => $parameter?->reference_range,
+                    'normal_range' => preg_replace('/\\\\n/', "\n", $parameter?->reference_range ?? ''),
                     'units' => $parameter?->unit,
                     'is_abnormal' => $result->is_abnormal,
                     'group_name' => $parameter?->group_name,
@@ -177,8 +177,14 @@ class LabOrder extends Model
     public function hasResults(): bool
     {
         foreach ($this->items as $item) {
-            if ($item->labResults()->count() > 0) {
-                return true;
+            if ($item->relationLoaded('labResults')) {
+                if ($item->labResults->count() > 0) {
+                    return true;
+                }
+            } else {
+                if ($item->labResults()->count() > 0) {
+                    return true;
+                }
             }
         }
         return false;
@@ -541,6 +547,25 @@ class LabOrder extends Model
                     return $param;
                 });
         }
+
+        // If it's a multi-test order (lab_test_type_id is null)
+        if ($this->items->count() > 0) {
+            $parameters = collect();
+            foreach ($this->items as $item) {
+                if ($item->labTestType) {
+                    $itemParams = $item->labTestType->parameters()
+                        ->orderBy('order')
+                        ->get()
+                        ->map(function ($param) {
+                            $param->formatted_range = $this->formatReferenceRange($param);
+                            return $param;
+                        });
+                    $parameters = $parameters->concat($itemParams);
+                }
+            }
+            return $parameters;
+        }
+
         return collect([]);
     }
 
@@ -557,20 +582,33 @@ class LabOrder extends Model
      */
     public function getTestNameAttribute(): string
     {
+        // 1. Explicitly set attribute (e.g. from DB)
         if (!empty($this->attributes['test_name'])) {
             return $this->attributes['test_name'];
         }
 
+        // 2. Aggregate from multiple items if they exist
+        if ($this->items->count() > 0) {
+            $names = $this->items->map(function ($item) {
+                return $item->labTestType ? $item->labTestType->name : null;
+            })->filter()->unique();
+
+            if ($names->count() > 0) {
+                return $names->implode(', ');
+            }
+        }
+
+        // 3. Fallback to testType relationship
         if ($this->testType) {
             return $this->testType->name;
         }
 
-        // Fallback: parse from comments
+        // 4. Fallback: parse from comments
         if ($this->comments && preg_match('/Test:\s*([^|]+)/', $this->comments, $matches)) {
             return trim($matches[1]);
         }
 
-        return 'Mixed Report';
+        return 'Mixed Lab Report';
     }
 
     /**
@@ -603,6 +641,22 @@ class LabOrder extends Model
         }
 
         return 'Blood';
+    }
+
+    /**
+     * Accessor for interpretation - handles literal \n
+     */
+    public function getInterpretationAttribute($value): ?string
+    {
+        return preg_replace('/\\\\n/', "\n", $value ?? '');
+    }
+
+    /**
+     * Accessor for recommendations - handles literal \n
+     */
+    public function getRecommendationsAttribute($value): ?string
+    {
+        return preg_replace('/\\\\n/', "\n", $value ?? '');
     }
 
     /**

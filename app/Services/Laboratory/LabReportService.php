@@ -160,19 +160,31 @@ class LabReportService
                     $parameter = LabTestParameter::find($parameterId);
 
                     if ($parameter) {
-                        $isAbnormal = $this->checkIfAbnormal($parameter, $value);
+                        // Find the corresponding LabOrderItem that contains this parameter
+                        $orderItem = $labOrder->items()->whereHas('labTestType.parameters', function ($query) use ($parameterId) {
+                            $query->where('id', $parameterId);
+                        })->first();
 
-                        LabResult::updateOrCreate(
-                            [
-                                'lab_order_id' => $labOrder->id,
-                                'lab_test_parameter_id' => $parameterId
-                            ],
-                            [
-                                'result_value' => $value,
-                                'is_abnormal' => $isAbnormal,
-                                'remarks' => $data['remarks'][$parameterId] ?? null
-                            ]
-                        );
+                        if ($orderItem) {
+                            $isAbnormal = $this->checkIfAbnormal($parameter, $value);
+
+                            LabResult::updateOrCreate(
+                                [
+                                    'lab_order_item_id' => $orderItem->id,
+                                    'lab_test_parameter_id' => $parameterId
+                                ],
+                                [
+                                    'numeric_value' => is_numeric($value) ? $value : null,
+                                    'text_value' => !is_numeric($value) ? $value : null,
+                                    'value_type' => is_numeric($value) ? 'numeric' : 'text',
+                                    'is_abnormal' => $isAbnormal,
+                                    'remarks' => $data['remarks'][$parameterId] ?? null
+                                ]
+                            );
+
+                            // Update item status to processing or completed
+                            $orderItem->update(['status' => 'processing']);
+                        }
                     }
                 }
             }

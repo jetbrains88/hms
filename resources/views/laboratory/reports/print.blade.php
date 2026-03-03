@@ -216,7 +216,7 @@
 </table>
 
 @if($labReport->hasResults())
-    <div class="report-title">{{ strtoupper($labReport->testType->name ?? 'TEST REPORT') }}</div>
+    <div class="report-title">{{ strtoupper($labReport->test_name) }}</div>
 
     <table class="results-table">
         <thead>
@@ -248,7 +248,7 @@
                 @if($showUnits)
                     <td>{{ $result['units'] ?? '' }}</td>
                 @endif
-                <td>{{ $result['normal_range'] ?? '' }}</td>
+                <td>{!! nl2br(e($result['normal_range'] ?? '')) !!}</td>
             </tr>
         @endforeach
         </tbody>
@@ -258,14 +258,14 @@
 @if($labReport->interpretation)
     <div style="margin-top: 15px;">
         <span class="label">Interpretation:</span>
-        <p style="margin: 0; font-size: 10pt;">{{ $labReport->interpretation }}</p>
+        <p style="margin: 0; font-size: 10pt;">{!! nl2br(e(str_replace(['\\n', '\n'], "\n", $labReport->interpretation))) !!}</p>
     </div>
 @endif
 
 @if($labReport->recommendations)
     <div style="margin-top: 10px;">
         <span class="label">Recommendation:</span>
-        <p style="margin: 0; font-size: 10pt;">{{ $labReport->recommendations }}</p>
+        <p style="margin: 0; font-size: 10pt;">{!! nl2br(e(str_replace(['\\n', '\n'], "\n", $labReport->recommendations))) !!}</p>
     </div>
 @endif
 

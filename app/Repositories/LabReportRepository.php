@@ -144,11 +144,15 @@ class LabReportRepository implements LabReportRepositoryInterface
             'technician',
             'testType',
             'visit.patient',
-            'results.parameter',
+            'results.labTestParameter',
+            'items.labResults.labTestParameter', // Eager load for formatted_results accessor
             'testType.parameters' => function ($query) {
                 $query->orderBy('order');
             },
-            'items.sampleInfo', // Add this - load sample info through items
+            'items.labTestType.parameters' => function ($query) {
+                $query->orderBy('order');
+            },
+            'items.sampleInfo',
             'verifiedBy'
         ])->findOrFail($id);
     }

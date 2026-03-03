@@ -4,12 +4,12 @@
 
 @section('content')
     @php
-        $showUnits = !in_array($labOrder->testType->name ?? '', ['Special Chemistry', 'Urine Routine Examination']);
+        $showUnits = !in_array($labReport->testType->name ?? '', ['Special Chemistry', 'Urine Routine Examination']);
     @endphp
     <div x-data="labReportDetails" class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
         <!-- Header -->
         <div class="mx-4 mt-6">
-            @if (session('success'))
+            @if(session('success'))
                 <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative flex items-center shadow-sm"
                     role="alert">
                     <i class="fas fa-check-circle mr-2"></i>
@@ -17,7 +17,7 @@
                 </div>
             @endif
 
-            @if (session('error'))
+            @if(session('error'))
                 <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative flex items-center shadow-sm"
                     role="alert">
                     <i class="fas fa-exclamation-circle mr-2"></i>
@@ -30,46 +30,41 @@
                     <div>
                         <h1 class="text-3xl font-bold text-gray-900">Lab Report Details</h1>
                         <div class="flex items-center mt-2 space-x-6">
-                            <span class="text-gray-600">Lab Number: <strong>{{ $labOrder->lab_number }}</strong></span>
-                            @if ($labOrder->testType)
-                                <span class="text-gray-600">Test: <strong>{{ $labOrder->testType->name }}</strong></span>
+                            <span class="text-gray-600">Lab Number: <strong>{{ $labReport->lab_number }}</strong></span>
+                            @if($labReport->testType)
+                                <span class="text-gray-600">Test: <strong>{{ $labReport->testType->name }}</strong></span>
                                 <span class="text-gray-600">Department:
-                                    <strong>{{ $labOrder->testType->department }}</strong></span>
+                                    <strong>{{ $labReport->testType->department }}</strong></span>
                             @endif
-                            <span class="px-3 py-1 rounded-full text-sm font-medium"
-                                :class="{
-                                    'bg-yellow-100 text-yellow-800': '{{ $labOrder->status }}'
-                                    === 'pending',
-                                    'bg-blue-100 text-blue-800': '{{ $labOrder->status }}'
-                                    === 'processing',
-                                    'bg-green-100 text-green-800': '{{ $labOrder->status }}'
-                                    === 'completed',
-                                    'bg-red-100 text-red-800': '{{ $labOrder->status }}'
-                                    === 'cancelled'
-                                }">
-                                {{ ucfirst($labOrder->status) }}
+                            <span class="px-3 py-1 rounded-full text-sm font-medium" :class="{
+                                'bg-yellow-100 text-yellow-800': '{{ $labReport->status }}' === 'pending',
+                                'bg-blue-100 text-blue-800': '{{ $labReport->status }}' === 'processing',
+                                'bg-green-100 text-green-800': '{{ $labReport->status }}' === 'completed',
+                                'bg-red-100 text-red-800': '{{ $labReport->status }}' === 'cancelled'
+                              }">
+                                {{ ucfirst($labReport->status) }}
                             </span>
-                            @if ($labOrder->is_verified)
+                            @if($labReport->is_verified)
                                 <div
                                     class="flex items-center gap-1 text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded border border-green-100">
                                     <i class="fas fa-check-circle"></i>
-                                    Verified by {{ $labOrder->verifiedBy->name ?? 'Unknown' }}
+                                    Verified by {{ $labReport->verifiedBy->name ?? 'Unknown' }}
                                     <span class="text-gray-400">|</span>
-                                    {{ $labOrder->verified_at ? $labOrder->verified_at->format('M d, H:i') : '' }}
+                                    {{ $labReport->verified_at ? $labReport->verified_at->format('M d, H:i') : '' }}
                                 </div>
                             @endif
                         </div>
                     </div>
                     <div class="flex space-x-4">
-                        <a href="{{ route('lab.results.edit', $labOrder->id) }}"
+                        <a href="{{ route('lab.reports.edit', $labReport->id) }}"
                             class="bg-yellow-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-shadow duration-300">
                             <i class="fas fa-edit mr-2"></i>Edit
                         </a>
-                        <a href="{{ route('lab.orders.print', $labOrder->id) }}" target="_blank"
+                        <a href="{{ route('lab.reports.print', $labReport->id) }}" target="_blank"
                             class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-shadow duration-300">
                             <i class="fas fa-print mr-2"></i>Print
                         </a>
-                        @if ($labOrder->status === 'pending' || $labOrder->status === 'processing')
+                        @if($labReport->status === 'pending' || $labReport->status === 'processing')
                             <button @click="confirmStatusChange('completed')"
                                 class="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-shadow duration-300">
                                 <i class="fas fa-check mr-2"></i>Mark Complete
@@ -93,11 +88,11 @@
                                 <div class="space-y-3">
                                     <div class="flex justify-between">
                                         <span class="text-gray-600">Total Tests:</span>
-                                        <span class="font-medium">{{ $labOrder->results->count() }}</span>
+                                        <span class="font-medium">{{ $labReport->results->count() }}</span>
                                     </div>
                                     <div class="flex justify-between">
                                         <span class="text-gray-600">Created At:</span>
-                                        <span class="font-medium">{{ $labOrder->created_at->format('M d, Y') }}</span>
+                                        <span class="font-medium">{{ $labReport->created_at->format('M d, Y') }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -109,20 +104,20 @@
                                     <div class="flex justify-between">
                                         <span class="text-gray-600">Requested:</span>
                                         <span
-                                            class="font-medium">{{ $labOrder->created_at->format('M d, Y h:i A') }}</span>
+                                            class="font-medium">{{ $labReport->created_at->format('M d, Y h:i A') }}</span>
                                     </div>
-                                    @if ($labOrder->collection_date)
+                                    @if($labReport->collection_date)
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Sample Collected:</span>
                                             <span
-                                                class="font-medium">{{ $labOrder->collection_date->format('M d, Y h:i A') }}</span>
+                                                class="font-medium">{{ $labReport->collection_date->format('M d, Y h:i A') }}</span>
                                         </div>
                                     @endif
-                                    @if ($labOrder->reporting_date)
+                                    @if($labReport->reporting_date)
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Results Ready:</span>
                                             <span
-                                                class="font-medium">{{ $labOrder->reporting_date->format('M d, Y h:i A') }}</span>
+                                                class="font-medium">{{ $labReport->reporting_date->format('M d, Y h:i A') }}</span>
                                         </div>
                                     @endif
                                 </div>
@@ -131,12 +126,12 @@
 
                         <!-- Results Table -->
                         @php
-                            $hasResults = $labOrder->results->count() > 0;
+                            $hasResults = $labReport->results->count() > 0;
                             // If results exist, use them. Otherwise, use expected parameters to show the structure.
-                            $displayItems = $hasResults ? $labOrder->results : $labOrder->expected_parameters;
+                            $displayItems = $hasResults ? $labReport->results : $labReport->expected_parameters;
                         @endphp
 
-                        @if ($displayItems->count() > 0)
+                        @if($displayItems->count() > 0)
                             <div class="mt-8">
                                 <h3 class="font-semibold text-gray-700 mb-4">
                                     {{ $hasResults ? 'Test Results' : 'Pending Test Parameters' }}
@@ -145,22 +140,17 @@
                                     <table class="w-full">
                                         <thead class="bg-gray-50">
                                             <tr>
-                                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                                                    Parameter</th>
-                                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Result
-                                                </th>
-                                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ref.
-                                                    Range</th>
-                                                @if ($showUnits)
-                                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Unit
-                                                    </th>
+                                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Parameter</th>
+                                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Result</th>
+                                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ref. Range</th>
+                                                @if($showUnits)
+                                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Unit</th>
                                                 @endif
-                                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status
-                                                </th>
+                                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-gray-200">
-                                            @foreach ($displayItems as $item)
+                                            @foreach($displayItems as $item)
                                                 @php
                                                     // Determine if we are looping through Result objects or Parameter objects
                                                     $isResult = $hasResults;
@@ -180,27 +170,24 @@
                                                     <td class="px-4 py-3 text-sm text-gray-600 overflow-wrap: break-word;">
                                                         {{ $refRange }}
                                                     </td>
-                                                    @if ($showUnits)
+                                                    @if($showUnits)
                                                         <td class="px-4 py-3 text-sm text-gray-600">
                                                             {{ $unit }}
                                                         </td>
                                                     @endif
                                                     <td class="px-4 py-3">
-                                                        @if ($isResult)
-                                                            @if ($isAbnormal)
-                                                                <span
-                                                                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                        @if($isResult)
+                                                            @if($isAbnormal)
+                                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                                                     <i class="fas fa-exclamation-circle mr-1"></i> Abnormal
                                                                 </span>
                                                             @else
-                                                                <span
-                                                                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                                     <i class="fas fa-check-circle mr-1"></i> Normal
                                                                 </span>
                                                             @endif
                                                         @else
-                                                            <span
-                                                                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                                                                 <i class="fas fa-clock mr-1"></i> Pending
                                                             </span>
                                                         @endif
@@ -213,60 +200,113 @@
                             </div>
                         @endif
 
-                        <!-- Comments -->
-                        @if ($labOrder->comments)
+                        <!-- Interpretation -->
+                        @if($labReport->interpretation)
                             <div class="mt-8">
-                                <h3 class="font-semibold text-gray-700 mb-4">Comments / Notes</h3>
-                                <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                                    <p class="text-gray-700 whitespace-pre-line">{{ $labOrder->comments }}</p>
+                                <h3 class="font-semibold text-gray-700 mb-4">Interpretation</h3>
+                                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                    <p class="text-gray-700">{{ $labReport->interpretation }}</p>
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- Recommendations -->
+                        @if($labReport->recommendations)
+                            <div class="mt-6">
+                                <h3 class="font-semibold text-gray-700 mb-4">Recommendations</h3>
+                                <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+                                    <p class="text-gray-700">{{ $labReport->recommendations }}</p>
                                 </div>
                             </div>
                         @endif
                     </div>
 
+                    <!-- Submit Results Form -->
+                    @if(in_array($labReport->status, ['pending', 'processing']))
+                        <div class="bg-white shadow-xl rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-gray-900 mb-6">Insert Results Values</h2>
+                            <form @submit.prevent="submitResults" id="resultsForm">
+                                <div class="space-y-6">
+                                    <!-- Results Input -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Parameters to be
+                                            added</label>
+                                        <div id="resultsContainer">
+                                            <!-- Dynamic results fields will be added here -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Interpretation -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Interpretation</label>
+                                        <textarea name="interpretation" rows="4"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="Enter interpretation of results..."></textarea>
+                                    </div>
+
+                                    <!-- Critical Result -->
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="is_critical" name="is_critical"
+                                            class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                                        <label for="is_critical" class="ml-2 text-sm text-gray-700">
+                                            Mark as Critical Result
+                                        </label>
+                                    </div>
+
+                                    <div class="flex justify-end space-x-4">
+                                        <button type="button" @click="cancelSubmission"
+                                            class="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50">
+                                            Cancel
+                                        </button>
+                                        <button type="submit"
+                                            class="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-shadow duration-300">
+                                            <i class="fas fa-check mr-2"></i> Submit Results
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Sidebar -->
                 <div class="space-y-6">
                     <!-- Add Sample Information to Sidebar -->
-                    @if ($labOrder->items->first()?->sampleInfo)
-                        @php $sampleInfo = $labOrder->items->first()->sampleInfo; @endphp
+                    @if($labReport->sampleInfo)
                         <div class="bg-white shadow-xl rounded-2xl p-6">
                             <h2 class="text-xl font-bold text-gray-900 mb-6">Sample Information</h2>
                             <div class="space-y-4">
                                 <div>
                                     <p class="text-sm text-gray-600">Sample ID</p>
-                                    <p class="font-medium text-gray-900">{{ $sampleInfo->sample_id ?? 'N/A' }}</p>
+                                    <p class="font-medium text-gray-900">{{ $labReport->sampleInfo->sample_id ?? 'N/A' }}</p>
                                 </div>
                                 <div>
                                     <p class="text-sm text-gray-600">Collection Time</p>
                                     <p class="font-medium text-gray-900">
-                                        {{ $sampleInfo->sample_collected_at ? \Carbon\Carbon::parse($sampleInfo->sample_collected_at)->format('M d, Y h:i A') : 'N/A' }}
+                                        {{ $labReport->sampleInfo->sample_collected_at ? \Carbon\Carbon::parse($labReport->sampleInfo->sample_collected_at)->format('M d, Y h:i A') : 'N/A' }}
                                     </p>
                                 </div>
                                 <div>
                                     <p class="text-sm text-gray-600">Container</p>
-                                    <p class="font-medium text-gray-900">
-                                        {{ ucfirst($sampleInfo->sample_container ?? 'Not specified') }}</p>
+                                    <p class="font-medium text-gray-900">{{ ucfirst($labReport->sampleInfo->sample_container ?? 'Not specified') }}</p>
                                 </div>
-                                @if ($sampleInfo->sample_quantity)
-                                    <div>
-                                        <p class="text-sm text-gray-600">Quantity</p>
-                                        <p class="font-medium text-gray-900">{{ $sampleInfo->sample_quantity }}
-                                            {{ $sampleInfo->sample_quantity_unit }}</p>
-                                    </div>
+                                @if($labReport->sampleInfo->sample_quantity)
+                                <div>
+                                    <p class="text-sm text-gray-600">Quantity</p>
+                                    <p class="font-medium text-gray-900">{{ $labReport->sampleInfo->sample_quantity }} {{ $labReport->sampleInfo->sample_quantity_unit }}</p>
+                                </div>
                                 @endif
-                                @if ($sampleInfo->sample_condition)
-                                    <div>
-                                        <p class="text-sm text-gray-600">Condition</p>
-                                        <p class="font-medium text-gray-900">{{ $sampleInfo->sample_condition }}</p>
-                                    </div>
+                                @if($labReport->sampleInfo->sample_condition)
+                                <div>
+                                    <p class="text-sm text-gray-600">Condition</p>
+                                    <p class="font-medium text-gray-900">{{ $labReport->sampleInfo->sample_condition }}</p>
+                                </div>
                                 @endif
-                                @if ($sampleInfo->special_instructions)
-                                    <div>
-                                        <p class="text-sm text-gray-600">Special Instructions</p>
-                                        <p class="font-medium text-gray-900">{{ $sampleInfo->special_instructions }}</p>
-                                    </div>
+                                @if($labReport->sampleInfo->special_instructions)
+                                <div>
+                                    <p class="text-sm text-gray-600">Special Instructions</p>
+                                    <p class="font-medium text-gray-900">{{ $labReport->sampleInfo->special_instructions }}</p>
+                                </div>
                                 @endif
                             </div>
                         </div>
@@ -278,30 +318,30 @@
                         <div class="space-y-4">
                             <div>
                                 <p class="text-sm text-gray-600">Patient Name</p>
-                                <p class="font-medium text-gray-900">{{ $labOrder->patient->name }}</p>
+                                <p class="font-medium text-gray-900">{{ $labReport->patient->name }}</p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">CNIC</p>
-                                <p class="font-medium text-gray-900">{{ $labOrder->patient->cnic }}</p>
+                                <p class="font-medium text-gray-900">{{ $labReport->patient->cnic }}</p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">EMRN</p>
-                                <p class="font-medium text-gray-900">{{ $labOrder->patient->emrn }}</p>
+                                <p class="font-medium text-gray-900">{{ $labReport->patient->emrn }}</p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">Age</p>
                                 <p class="font-medium text-gray-900">
-                                    {{ \Carbon\Carbon::parse($labOrder->patient->dob)->age }}
+                                    {{ \Carbon\Carbon::parse($labReport->patient->dob)->age }}
                                     years</p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">Gender</p>
-                                <p class="font-medium text-gray-900">{{ ucfirst($labOrder->patient->gender) }}</p>
+                                <p class="font-medium text-gray-900">{{ ucfirst($labReport->patient->gender) }}</p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">Blood Group</p>
                                 <p class="font-medium text-gray-900">
-                                    {{ $labOrder->patient->blood_group ?? 'Not Specified' }}</p>
+                                    {{ $labReport->patient->blood_group ?? 'Not Specified' }}</p>
                             </div>
                         </div>
                     </div>
@@ -312,31 +352,30 @@
                         <div class="space-y-4">
                             <div>
                                 <p class="text-sm text-gray-600">Requesting Doctor</p>
-                                <p class="font-medium text-gray-900">{{ $labOrder->doctor->name }}</p>
+                                <p class="font-medium text-gray-900">{{ $labReport->doctor->name }}</p>
                             </div>
-                            @if ($labOrder->technician)
+                            @if($labReport->technician)
                                 <div>
                                     <p class="text-sm text-gray-600">Lab Technician</p>
-                                    <p class="font-medium text-gray-900">{{ $labOrder->technician->name }}</p>
+                                    <p class="font-medium text-gray-900">{{ $labReport->technician->name }}</p>
                                 </div>
                             @endif
-                            @if ($labOrder->verified_by)
+                            @if($labReport->verified_by)
                                 <div>
                                     <p class="text-sm text-gray-600">Verified By</p>
-                                    <p class="font-medium text-gray-900">{{ $labOrder->verifier->name }}</p>
-                                    <p class="text-xs text-gray-500">{{ $labOrder->verified_at->format('M d, Y h:i A') }}
-                                    </p>
+                                    <p class="font-medium text-gray-900">{{ $labReport->verifier->name }}</p>
+                                    <p class="text-xs text-gray-500">{{ $labReport->verified_at->format('M d, Y h:i A') }}</p>
                                 </div>
                             @endif
                         </div>
                     </div>
 
                     <!-- Quick Actions -->
-                    @if ($labOrder->status === 'completed')
+                    @if($labReport->status === 'completed')
                         <div class="bg-white shadow-xl rounded-2xl p-6">
                             <h2 class="text-xl font-bold text-gray-900 mb-6">Quick Actions</h2>
                             <div class="space-y-3">
-                                @if (!$labOrder->verified_by)
+                                @if(!$labReport->verified_by)
                                     <button @click="showVerifyModal = true"
                                         class="w-full bg-green-600 text-white px-4 py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors duration-200">
                                         <i class="fas fa-check-circle mr-2"></i> Verify Report
@@ -348,13 +387,13 @@
                                     <i class="fas fa-paper-plane mr-2"></i> Send to Doctor
                                 </button>
 
-                                <a href="{{ route('lab.reports.download-pdf', $labOrder->id) }}"
+                                <a href="{{ route('lab.reports.download-pdf', $labReport->id) }}"
                                     class="block w-full bg-purple-600 text-white px-4 py-3 rounded-xl font-semibold hover:bg-purple-700 transition-colors duration-200 text-center">
                                     <i class="fas fa-file-download mr-2"></i> Download Report (PDF)
                                 </a>
 
-                                @if ($labOrder->file_path)
-                                    <a href="{{ Storage::url($labOrder->file_path) }}" target="_blank"
+                                @if($labReport->file_path)
+                                    <a href="{{ Storage::url($labReport->file_path) }}" target="_blank"
                                         class="block w-full bg-gray-600 text-white px-4 py-3 rounded-xl font-semibold hover:bg-gray-700 transition-colors duration-200 text-center">
                                         <i class="fas fa-paperclip mr-2"></i> View Uploaded File
                                     </a>
@@ -365,7 +404,7 @@
                         <div class="bg-white shadow-xl rounded-2xl p-6">
                             <h2 class="text-xl font-bold text-gray-900 mb-6">Workflow Actions</h2>
                             <div class="space-y-3">
-                                @if ($labOrder->status === 'pending')
+                                @if($labReport->status === 'pending')
                                     <button @click="confirmStatusChange('processing')"
                                         class="w-full bg-blue-600 text-white px-4 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors duration-200">
                                         <i class="fas fa-flask mr-2"></i> Mark as Processing
@@ -475,8 +514,7 @@
                     <div class="flex items-start">
                         <div class="flex-shrink-0">
                             <i class="fas"
-                                :class="toastType === 'success' ? 'fa-check-circle text-green-400' :
-                                    'fa-exclamation-circle text-red-400'"></i>
+                                :class="toastType === 'success' ? 'fa-check-circle text-green-400' : 'fa-exclamation-circle text-red-400'"></i>
                         </div>
                         <div class="ml-3 w-0 flex-1 pt-0.5">
                             <p class="text-sm font-medium text-gray-900" x-text="toastMessage"></p>
@@ -497,8 +535,7 @@
                             @click="showParameterWarning = false"></div>
                         <div
                             class="relative bg-white rounded-2xl shadow-2xl overflow-hidden max-w-md w-full p-6 text-center">
-                            <div
-                                class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
                                 <i class="fas fa-exclamation-triangle text-yellow-600"></i>
                             </div>
                             <h3 class="text-lg font-bold text-gray-900 mb-2">No Results Found</h3>
@@ -530,13 +567,168 @@
                         showParameterWarning: false,
 
                         init() {
+                            // Initialize with existing results if any
+                            @if($labReport->hasResults())
+                                // Load existing results
+                                const results = @json($labReport->formatted_results);
+                                results.forEach(item => {
+                                    this.addResultField(
+                                        item.test,
+                                        item.result,
+                                        item.normal_range,
+                                        item.units,
+                                        item.parameter_id // Keep track of ID
+                                    );
+                                });
+                            @else
+                                // Load expected parameters for new entry
+                                const parameters = @json($labReport->expected_parameters);
+                                if (parameters.length > 0) {
+                                    parameters.forEach(param => {
+                                        this.addResultField(
+                                            param.name,
+                                            '',
+                                            param.formatted_range,
+                                            param.unit,
+                                            param.id // Pass ID
+                                        );
+                                    });
+                                }
+                            @endif
+                    },
+
+                        addResultField(parameter = '', result = '', normalRange = '', unit = '', parameterId = '') {
+                            const id = 'result_' + Date.now() + Math.random();
+                            const showUnits = {{ $showUnits ? 'true' : 'false' }};
+                            this.resultFields.push({ id, parameter, result, normalRange, unit, parameterId });
+
+                            // Update DOM
+                            setTimeout(() => {
+                                const container = document.getElementById('resultsContainer');
+                                if (!container) return;
+
+                                const gridCols = showUnits ? 'md:grid-cols-4' : 'md:grid-cols-3';
+                                const template = `
+                        <div class="grid grid-cols-1 ${gridCols} gap-4 mb-4" data-id="${id}">
+                            <input type="hidden" name="parameters[]" value="${parameter}">
+                            <input type="hidden" name="parameter_ids[]" value="${parameterId}">
+
+                            <div class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 font-medium">
+                                ${parameter}
+                            </div>
+
+                            <input type="text" name="results[]" placeholder="Result"
+                                   value="${result}" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+
+                            <div class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 text-sm">
+                                ${normalRange || 'N/A'}
+                            </div>
+
+                            ${showUnits ? `
+                            <div class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 text-sm">
+                                ${unit || 'N/A'}
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                                container.insertAdjacentHTML('beforeend', template);
+                            });
                         },
 
+                        async submitResults() {
+                            const form = document.getElementById('resultsForm');
+                            const formData = new FormData(form);
+
+                            const fileInput = form.querySelector('input[type="file"]');
+
+                            const resultValues = {};
+
+                            const params = formData.getAll('parameters[]');
+                            const paramIds = formData.getAll('parameter_ids[]');
+                            const res = formData.getAll('results[]');
+
+                            // Prioritize finding IDs
+                            // If paramIds are present, use them. Otherwise fallback to names (legacy compatibility)
+
+                            if (res.length > 0) {
+                                res.forEach((value, index) => {
+                                    if (paramIds[index]) {
+                                        resultValues[paramIds[index]] = value;
+                                    } else if (params[index]) {
+                                        resultValues[params[index]] = value;
+                                    }
+                                });
+                            }
+
+                            const payload = {
+                                result_values: resultValues,
+                                interpretation: formData.get('interpretation'),
+                                recommendations: formData.get('recommendations'),
+                                is_critical: formData.get('is_critical') === 'on'
+                            };
+
+                            try {
+                                const baseUrl = window.location.origin;
+                                const url = `${baseUrl}/lab/reports/{{ $labReport->id }}/results`;
+                                const response = await fetch(url, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                    },
+                                    body: JSON.stringify(payload)
+                                });
+
+                                const text = await response.text();
+                                let data;
+                                try {
+                                    data = JSON.parse(text);
+                                } catch (e) {
+                                    console.error('Invalid JSON response:', text);
+                                    throw new Error('Server returned an invalid response. Please check logs.');
+                                }
+
+                                if (data.success) {
+                                    if (fileInput && fileInput.files.length > 0) {
+                                        await this.uploadFile(fileInput.files[0]);
+                                    }
+
+                                    showSuccess('Results submitted successfully!', 'success');
+                                    setTimeout(() => window.location.reload(), 1500);
+                                } else {
+                                    showError(data.message || 'Failed to submit results', 'error');
+                                }
+                            } catch (error) {
+                                console.error('Error submitting results:', error);
+                                showError('Failed to submit results', 'error');
+                            }
+                        },
+
+                        async uploadFile(file) {
+                            const formData = new FormData();
+                            formData.append('file', file);
+
+                            try {
+                                const baseUrl = window.location.origin;
+                                const url = `${baseUrl}/lab/reports/{{ $labReport->id }}/upload`;
+                                await fetch(url, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                    },
+                                    body: formData
+                                });
+                            } catch (error) {
+                                console.error('Error uploading file:', error);
+                            }
+                        },
 
                         confirmStatusChange(status) {
                             // Check if results exist before allowing completion
                             if (status === 'completed') {
-                                const resultsCount = {{ $labOrder->results->count() }};
+                                const resultsCount = {{ $labReport->results->count() }};
                                 if (resultsCount === 0) {
                                     this.showParameterWarning = true;
                                     return;
@@ -555,18 +747,16 @@
                             this.showConfirmModal = false;
 
                             try {
-                                const url = '{{ route("lab.results.update", $labOrder->id) }}';
+                                const baseUrl = window.location.origin;
+                                const url = `${baseUrl}/lab/reports/{{ $labReport->id }}/status`;
                                 const response = await fetch(url, {
                                     method: 'PUT',
                                     headers: {
                                         'Content-Type': 'application/json',
                                         'Accept': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector(
-                                            'meta[name="csrf-token"]').content
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                                     },
-                                    body: JSON.stringify({
-                                        status
-                                    })
+                                    body: JSON.stringify({ status })
                                 });
 
                                 const data = await response.json();
@@ -587,18 +777,16 @@
                             this.showVerifyModal = false;
 
                             try {
-                                const url = '{{ route("lab.results.verify", $labOrder->id) }}';
+                                const baseUrl = window.location.origin;
+                                const url = `${baseUrl}/lab/reports/{{ $labReport->id }}/verify`;
                                 const response = await fetch(url, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
                                         'Accept': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector(
-                                            'meta[name="csrf-token"]').content
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                                     },
-                                    body: JSON.stringify({
-                                        verification_notes: notes
-                                    })
+                                    body: JSON.stringify({ verification_notes: notes })
                                 });
 
                                 const data = await response.json();
@@ -617,14 +805,12 @@
                         async sendToDoctor() {
                             try {
                                 const baseUrl = window.location.origin;
-                                const url =
-                                    `${baseUrl}/laboratory/reports/{{ $labOrder->id }}/notify-doctor`;
+                                const url = `${baseUrl}/lab/reports/{{ $labReport->id }}/notify-doctor`;
                                 const response = await fetch(url, {
                                     method: 'POST',
                                     headers: {
                                         'Accept': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector(
-                                            'meta[name="csrf-token"]').content
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                                     }
                                 });
 
@@ -649,4 +835,4 @@
                     }));
                 });
             </script>
-        @endsection
+@endsection

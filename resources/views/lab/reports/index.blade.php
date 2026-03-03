@@ -546,7 +546,7 @@
                                 <td class="px-5 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex flex-col space-y-2 min-w-[120px]">
                                         <!-- View/Process Button -->
-                                        <a :href="`/lab/orders/${report.id}`"
+                                        <a :href="`/lab/reports/${report.id}`"
                                             class="transition-colors duration-200 text-left"
                                             :class="report.status === 'completed' ? 'text-blue-600 hover:text-blue-800' :
                                                 'text-indigo-600 hover:text-indigo-800'"
@@ -557,7 +557,7 @@
                                         </a>
 
                                         <!-- Edit Button -->
-                                        <a :href="`/lab/orders/${report.id}/edit`"
+                                        <a :href="`/lab/results/${report.id}/edit`"
                                             class="text-amber-600 hover:text-amber-800 transition-colors duration-200 text-left"
                                             title="Edit Report">
                                             <i class="fas fa-edit mr-2 w-4"></i>
@@ -566,7 +566,7 @@
 
                                         <!-- Print Button (conditional) -->
                                         <template x-if="report.status === 'completed'">
-                                            <a :href="`/lab/orders/${report.id}/print`" target="_blank"
+                                            <a :href="`/lab/results/${report.id}/print`" target="_blank"
                                                 class="text-green-600 hover:text-green-800 transition-colors duration-200 text-left"
                                                 title="Print Report">
                                                 <i class="fas fa-print mr-2 w-4"></i>
