@@ -206,14 +206,14 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {{-- Search --}}
-                    <div class="md:col-span-2 relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-search text-gray-400"></i>
+                    <div class="md:col-span-2 relative group">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="fas fa-magnifying-glass text-blue-500 group-focus-within:text-rose-500 transition-colors"></i>
                         </div>
                         <input type="text" x-model="filters.search"
                                @input.debounce.500ms="fetchAlerts(1)"
                                placeholder="Search by medicine name, generic name..."
-                               class="pl-10 w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-rose-500 outline-none bg-white text-sm">
+                               class="pl-11 w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none bg-white text-sm transition-all shadow-sm group-hover:shadow-md">
                     </div>
 
                     {{-- Alert Type Filter --}}
@@ -457,7 +457,7 @@
                         </th>
                         <th class="px-5 py-4 text-center">
                             <div class="flex items-center gap-2 text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                <i class="fas fa-cogs text-gray-500"></i>
+                                <i class="fas fa-cogs text-orange-500"></i>
                                 Actions
                             </div>
                         </th>
@@ -889,12 +889,15 @@ function stockAlerts() {
         // Filter methods
         setFilter(type) {
             this.filters.status = type;
+            this.filters.alert_type = ''; // Clear specific type when clicking summary status
+            this.filters.medicine_id = '';
             this.fetchAlerts(1);
         },
 
         setAlertTypeFilter(type) {
             this.filters.alert_type = type;
             this.filters.status = 'active';
+            this.filters.medicine_id = ''; // Clear specific medicine when clicking type card
             this.fetchAlerts(1);
         },
 

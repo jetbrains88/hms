@@ -137,6 +137,7 @@ class DispenseService
         else {
             // Create new alert
             StockAlert::create([
+                'branch_id' => auth()->user()->current_branch_id ?? $medicine->branch_id ?? 1,
                 'medicine_id' => $medicine->id,
                 'alert_type' => $alertType,
                 'message' => $message,

@@ -162,11 +162,11 @@
                                 Filters
                             </button>
                             <!-- Add Role Button -->
-                            <button @click="openAddModal()"
+                            <a href="{{ route('admin.roles.create') }}"
                                 class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-colors text-sm font-medium shadow-md hover:shadow-lg">
                                 <i class="fas fa-plus"></i>
                                 Add Role
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -287,19 +287,19 @@
                                 <!-- Actions Column -->
                                 <td class="px-5 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex flex-col space-y-2 w-fit">
-                                        <button @click="viewPermissions(role)"
+                                        <a :href="'{{ route('admin.roles.edit', 'role_id') }}'.replace('role_id', role.id)"
                                             class="inline-flex items-center justify-center px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors w-full"
                                             title="View Permissions">
                                             <i class="fas fa-shield-alt mr-1.5 text-xs"></i>
                                             Permissions
-                                        </button>
+                                        </a>
 
-                                        <button @click="editRole(role)"
+                                        <a :href="'{{ route('admin.roles.edit', 'role_id') }}'.replace('role_id', role.id)"
                                             class="inline-flex items-center justify-center px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors w-full"
                                             title="Edit Role">
                                             <i class="fas fa-edit mr-1.5 text-xs"></i>
                                             Edit
-                                        </button>
+                                        </a>
 
                                         <template x-if="role.id > 5">
                                             <div class="flex flex-col space-y-2">
@@ -349,11 +349,11 @@
                                         <i class="fas fa-user-tag text-5xl"></i>
                                     </div>
                                     <h3 class="text-lg font-medium text-gray-900 mb-2">No roles found</h3>
-                                    <button @click="openAddModal()"
+                                    <a href="{{ route('admin.roles.create') }}"
                                         class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all shadow-md hover:shadow-lg font-medium">
                                         <i class="fas fa-plus"></i>
                                         Add First Role
-                                    </button>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -389,158 +389,8 @@
             </div>
         </div>
 
-        <!-- View Permissions Modal -->
-        <div x-show="showPermissionsModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="closePermissionsModal()"></div>
-                <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-                    <div class="bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-4 border-b border-emerald-100 sticky top-0 z-10">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mr-3 shadow-sm border border-emerald-200">
-                                    <i class="fas fa-shield-alt text-emerald-600"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-xl font-bold text-gray-900" x-text="selectedRole?.display_name + ' Permissions'"></h3>
-                                    <p class="text-xs text-emerald-600 font-medium" x-text="'System Name: ' + selectedRole?.name"></p>
-                                </div>
-                            </div>
-                            <button @click="closePermissionsModal()" class="text-gray-400 hover:text-gray-500 bg-white rounded-full p-1 hover:bg-gray-100 transition-colors">
-                                <i class="fas fa-times text-xl"></i>
-                            </button>
-                        </div>
-                    </div>
 
-                    <div class="p-6 max-h-[70vh] overflow-y-auto bg-gray-50/30">
-                        <div x-show="loadingPermissions" class="flex flex-col items-center justify-center py-12">
-                            <div class="w-10 h-10 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-4"></div>
-                            <p class="text-gray-600 font-medium">Loading permissions...</p>
-                        </div>
 
-                        <div x-show="!loadingPermissions" class="space-y-6">
-                            <template x-for="(permissions, group) in rolePermissions" :key="group">
-                                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:border-emerald-200 transition-colors">
-                                    <div class="bg-gray-50 px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-                                        <i class="fas fa-folder-open text-amber-500"></i>
-                                        <h4 class="font-bold text-gray-800 text-sm uppercase tracking-wider" x-text="formatGroupName(group)"></h4>
-                                        <span class="ml-auto bg-gray-200 px-2 py-0.5 rounded-full text-[10px] font-bold text-gray-600" x-text="permissions.length"></span>
-                                    </div>
-                                    <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        <template x-for="permission in permissions" :key="permission.id">
-                                            <div class="flex items-center gap-3 p-2 rounded-lg bg-gray-50/50 border border-transparent hover:border-emerald-100 hover:bg-emerald-50 transition-all group">
-                                                <div class="h-6 w-6 rounded-full bg-emerald-100 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                    <i class="fas fa-check text-[10px] text-emerald-600"></i>
-                                                </div>
-                                                <div>
-                                                    <p class="text-sm font-bold text-gray-800" x-text="permission.display_name"></p>
-                                                    <p class="text-[10px] text-gray-500 font-mono" x-text="permission.name"></p>
-                                                </div>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
-                            </template>
-
-                            <template x-if="Object.keys(rolePermissions).length === 0">
-                                <div class="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
-                                    <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-400">
-                                        <i class="fas fa-lock-open text-2xl"></i>
-                                    </div>
-                                    <h4 class="text-lg font-bold text-gray-800">No Permissions Assigned</h4>
-                                    <p class="text-sm text-gray-500">This role currently has no specific permissions granted.</p>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-
-                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
-                        <button @click="editRole(selectedRole)" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold transition-all flex items-center gap-2">
-                            <i class="fas fa-edit"></i>
-                            Edit Permissions
-                        </button>
-                        <button @click="closePermissionsModal()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-bold transition-all">
-                            Close
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Role Modal -->
-        <div x-show="showRoleModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="closeRoleModal()"></div>
-                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-100">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                                    <i class="fas fa-user-tag text-blue-600"></i>
-                                </div>
-                                <h3 class="text-xl font-bold text-gray-900" x-text="editingRole ? 'Edit Role' : 'Add New Role'"></h3>
-                            </div>
-                            <button @click="closeRoleModal()" class="text-gray-400 hover:text-gray-500">
-                                <i class="fas fa-times text-xl"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <form @submit.prevent="saveRole()" class="px-6 pt-6 pb-8">
-                        <div class="space-y-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-900 mb-2">Role Name (Slug)</label>
-                                <input type="text" x-model="roleForm.name" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g. manager" required>
-                                <p class="text-xs text-gray-500 mt-1">Lowercase, no spaces, use underscores.</p>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-900 mb-2">Display Name</label>
-                                <input type="text" x-model="roleForm.display_name" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g. Department Manager" required>
-                            </div>
-
-                            <!-- Permissions -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-900 mb-3">Permissions</label>
-                                <div class="border border-gray-300 rounded-lg overflow-hidden">
-                                    <div class="max-h-96 overflow-y-auto p-4 bg-gray-50">
-                                        <template x-for="(groupPermissions, group) in groupedPermissions" :key="group">
-                                            <div class="mb-6 last:mb-0">
-                                                <div class="flex items-center mb-3">
-                                                    <input type="checkbox" :checked="isGroupSelected(group)" @change="toggleGroup(group, $event.target.checked)" class="rounded text-blue-600">
-                                                    <h4 class="font-semibold text-gray-900 ml-2" x-text="formatGroupName(group)"></h4>
-                                                </div>
-                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 ml-6">
-                                                    <template x-for="permission in groupPermissions" :key="permission.id">
-                                                        <label class="flex items-center space-x-3 p-2 hover:bg-white rounded border border-gray-200 cursor-pointer">
-                                                            <input type="checkbox" :value="permission.id" x-model="roleForm.permissions" class="rounded text-blue-600">
-                                                            <div class="flex-1">
-                                                                <span class="block text-sm font-medium text-gray-900" x-text="permission.display_name"></span>
-                                                                <span class="text-xs text-gray-500 font-mono" x-text="permission.name"></span>
-                                                            </div>
-                                                        </label>
-                                                    </template>
-                                                </div>
-                                            </div>
-                                        </template>
-                                    </div>
-                                    <div class="bg-gray-100 px-4 py-3 border-t border-gray-300 flex justify-between items-center">
-                                        <span class="text-sm text-gray-600" x-text="`${roleForm.permissions.length} selected`"></span>
-                                        <button type="button" @click="selectAllPermissions()" class="text-sm text-blue-600 font-medium">Select All</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-8 flex justify-end space-x-3 border-t border-gray-200 pt-6">
-                            <button type="button" @click="closeRoleModal()" class="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
-                            <button type="submit" :disabled="saving" class="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
-                                <span x-text="editingRole ? 'Update Role' : 'Save Role'"></span>
-                                <i x-show="saving" class="fas fa-spinner fa-spin ml-2"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
 
         <!-- Delete Confirmation Modal -->
         <div x-show="showDeleteModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
@@ -584,17 +434,11 @@
                 loading: false,
                 saving: false,
                 deleting: false,
-                showRoleModal: false,
                 showDeleteModal: false,
-                showPermissionsModal: false,
                 showAdvancedFilters: false,
-                editingRole: false,
                 roleToDelete: null,
-                selectedRole: null,
                 searchQuery: '',
                 groupedPermissions: groupedPermissions,
-                rolePermissions: {},
-                loadingPermissions: false,
                 
                 pagination: {
                     current_page: 1,
@@ -612,12 +456,6 @@
                     system_roles: 0
                 },
 
-                roleForm: {
-                    id: null,
-                    name: '',
-                    display_name: '',
-                    permissions: []
-                },
 
                 async init() {
                     await this.fetchRoles();
@@ -702,78 +540,6 @@
                     return range;
                 },
 
-                openAddModal() {
-                    this.editingRole = false;
-                    this.roleForm = { id: null, name: '', display_name: '', permissions: [] };
-                    this.showRoleModal = true;
-                },
-
-                editRole(role) {
-                    this.editingRole = true;
-                    this.roleForm = {
-                        id: role.id,
-                        name: role.name,
-                        display_name: role.display_name,
-                        permissions: role.permissions.map(p => p.id)
-                    };
-                    this.showRoleModal = true;
-                },
-
-                viewPermissions(role) {
-                    this.selectedRole = role;
-                    this.loadingPermissions = true;
-                    this.showPermissionsModal = true;
-                    
-                    // Group permissions of the role
-                    const grouped = {};
-                    role.permissions.forEach(p => {
-                        if (!grouped[p.group]) grouped[p.group] = [];
-                        grouped[p.group].push(p);
-                    });
-                    this.rolePermissions = grouped;
-                    this.loadingPermissions = false;
-                },
-
-                closeRoleModal() {
-                    this.showRoleModal = false;
-                },
-
-                closePermissionsModal() {
-                    this.showPermissionsModal = false;
-                    this.selectedRole = null;
-                },
-
-                async saveRole() {
-                    this.saving = true;
-                    try {
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                        const url = this.editingRole ? `/admin/roles/${this.roleForm.id}` : '/admin/roles';
-                        const method = this.editingRole ? 'PUT' : 'POST';
-                        
-                        const response = await fetch(url, {
-                            method: method,
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken,
-                                'Accept': 'application/json'
-                            },
-                            body: JSON.stringify(this.roleForm)
-                        });
-                        const result = await response.json();
-                        if (result.success) {
-                            this.showToast(result.message, 'success');
-                            this.closeRoleModal();
-                            this.fetchRoles();
-                            this.fetchStats();
-                        } else {
-                            this.showToast(result.message || 'Error saving role', 'error');
-                        }
-                    } catch (e) {
-                        this.showToast('Network error', 'error');
-                    } finally {
-                        this.saving = false;
-                    }
-                },
 
                 confirmDelete(role) {
                     this.roleToDelete = role;

@@ -205,6 +205,7 @@ class InventoryService
             // Check if we need to create a stock alert
             if ($newStock <= $medicine->reorder_level && $newStock > 0) {
                 StockAlert::create([
+                    'branch_id' => auth()->user()->current_branch_id ?? $medicine->branch_id ?? 1,
                     'medicine_id' => $medicine->id,
                     'alert_type' => 'low_stock',
                     'message' => "{$medicine->name} is low on stock. Current stock: {$newStock}, Reorder level: {$medicine->reorder_level}",
@@ -212,6 +213,7 @@ class InventoryService
                 ]);
             } elseif ($newStock == 0) {
                 StockAlert::create([
+                    'branch_id' => auth()->user()->current_branch_id ?? $medicine->branch_id ?? 1,
                     'medicine_id' => $medicine->id,
                     'alert_type' => 'out_of_stock',
                     'message' => "{$medicine->name} is out of stock.",

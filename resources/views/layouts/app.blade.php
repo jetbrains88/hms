@@ -365,7 +365,6 @@
                         <i class="fas fa-search absolute left-3 top-3 text-slate-400"></i>
                         <i x-show="loading" class="fas fa-spinner fa-spin absolute right-3 top-3 text-slate-400"></i>
                     </div>
-
                     <div x-show="showResults" x-cloak
                         class="absolute mt-2 w-full bg-white rounded-xl shadow-xl border border-slate-100 z-50 max-h-96 overflow-y-auto">
                         <template x-for="result in results" :key="result.id">
@@ -437,6 +436,12 @@
                                     class="flex items-center px-3 py-2 text-sm rounded-xl hover:bg-indigo-50 {{ request()->routeIs('admin.roles.*') ? 'text-indigo-600 bg-indigo-50' : 'text-slate-600' }}">
                                     <i class="fas fa-user-tag w-6 text-center"></i>
                                     <span class="ml-2">Roles</span>
+                                </a>
+
+                                <a href="{{ route('admin.permissions.index') }}"
+                                    class="flex items-center px-3 py-2 text-sm rounded-xl hover:bg-indigo-50 {{ request()->routeIs('admin.permissions.*') ? 'text-indigo-600 bg-indigo-50' : 'text-slate-600' }}">
+                                    <i class="fas fa-shield-alt w-6 text-center"></i>
+                                    <span class="ml-2">Permissions</span>
                                 </a>
 
                                 <a href="{{ route('admin.branches.index') }}"
@@ -702,7 +707,7 @@
         </aside>
 
         <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+        <div class="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50 h-screen overflow-hidden relative">
             <!-- Header -->
             <header class="h-20 bg-white/80 backdrop-blur-xl sticky top-0 z-30 border-b border-slate-200 shadow-sm">
                 <div class="px-6 h-full flex justify-between items-center">
@@ -844,49 +849,7 @@
             </header>
 
             <!-- Main Content -->
-            <main class="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth flex flex-col min-h-0">
-                <!-- Flash Messages -->
-                <div id="flash-container" class="mb-6 space-y-2 shrink-0">
-                    @if (session('success'))
-                        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-lg"
-                            role="alert">
-                            <div class="flex items-center">
-                                <i class="fas fa-check-circle mr-2"></i>
-                                <span>{{ session('success') }}</span>
-                            </div>
-                        </div>
-                    @endif
-
-                    @if (session('error'))
-                        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg" role="alert">
-                            <div class="flex items-center">
-                                <i class="fas fa-exclamation-circle mr-2"></i>
-                                <span>{{ session('error') }}</span>
-                            </div>
-                        </div>
-                    @endif
-
-                    @if (session('warning'))
-                        <div class="bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 rounded-lg"
-                            role="alert">
-                            <div class="flex items-center">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>
-                                <span>{{ session('warning') }}</span>
-                            </div>
-                        </div>
-                    @endif
-
-                    @if (session('info'))
-                        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-lg"
-                            role="alert">
-                            <div class="flex items-center">
-                                <i class="fas fa-info-circle mr-2"></i>
-                                <span>{{ session('info') }}</span>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-
+            <main class="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth min-h-0 min-w-0">
                 <!-- Page Content -->
                 <div class="animate-fade-in flex-1">
                     @yield('content')
@@ -935,15 +898,29 @@
         setInterval(updateTime, 1000);
         updateTime();
 
-        // Auto-hide flash messages after 5 seconds
+        // Flash Notifications from Session
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                document.querySelectorAll('#flash-container > div').forEach(el => {
-                    el.style.transition = 'opacity 0.5s';
-                    el.style.opacity = '0';
-                    setTimeout(() => el.remove(), 500);
-                });
-            }, 5000);
+            @if (session('success'))
+                showSuccess("{{ session('success') }}");
+            @endif
+
+            @if (session('error'))
+                showError("{{ session('error') }}");
+            @endif
+
+            @if (session('warning'))
+                showWarning("{{ session('warning') }}");
+            @endif
+
+            @if (session('info'))
+                showInfo("{{ session('info') }}");
+            @endif
+
+            @if ($errors->any())
+                @foreach ($errors->all() as $error)
+                    showError("{{ $error }}", "Validation Error");
+                @endforeach
+            @endif
         });
     </script>
 

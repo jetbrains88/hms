@@ -187,6 +187,8 @@ Route::middleware(['auth', 'role:super_admin,admin'])->prefix('admin')->name('ad
     Route::get('permissions/stats', [PermissionController::class, 'stats'])->name('permissions.stats');
     Route::get('permissions/data', [PermissionController::class, 'data'])->name('permissions.data');
     Route::post('permissions/{permission}/toggle-status', [PermissionController::class, 'toggleStatus'])->name('permissions.toggle-status');
+    Route::post('permissions/bulk-status', [PermissionController::class, 'bulkStatus'])->name('permissions.bulk-status');
+    Route::post('permissions/bulk-destroy', [PermissionController::class, 'bulkDestroy'])->name('permissions.bulk-destroy');
     Route::resource('permissions', PermissionController::class)->except(['show']);
 
     // Branch Management
@@ -369,8 +371,8 @@ Route::middleware(['auth', 'role:pharmacy'])->prefix('pharmacy')->name('pharmacy
     // Inventory Management
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory');
     Route::get('/inventory/list', [InventoryController::class, 'inventoryList'])->name('inventory.list');
-    Route::get('/inventory/{medicine}/stock', [InventoryController::class, 'medicineStock'])->name('inventory.stock');
     Route::get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
+    Route::get('/inventory/{medicine}/stock', [InventoryController::class, 'medicineStock'])->name('inventory.stock');
     Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
     Route::get('/inventory/batch/{batch}', [InventoryController::class, 'showBatch'])->name('inventory.batch');
     Route::post('/inventory/batch/{batch}/add-stock', [InventoryController::class, 'addStock'])
@@ -388,9 +390,9 @@ Route::middleware(['auth', 'role:pharmacy'])->prefix('pharmacy')->name('pharmacy
     Route::get('/alerts', [StockAlertController::class, 'index'])->name('alerts.index');
     Route::get('/alerts/data', [StockAlertController::class, 'getAlertsData'])->name('alerts.data');
     Route::get('/alerts/stats', [StockAlertController::class, 'getStats'])->name('alerts.stats');
-    Route::post('/alerts/{alert}/resolve', [StockAlertController::class, 'resolve'])->name('alerts.resolve');
     Route::post('/alerts/bulk/resolve', [StockAlertController::class, 'bulkResolve'])->name('alerts.bulk-resolve');
     Route::post('/alerts/resolve-all', [StockAlertController::class, 'resolveAll'])->name('alerts.resolve-all');
+    Route::post('/alerts/{alert}/resolve', [StockAlertController::class, 'resolve'])->name('alerts.resolve');
 
     // Reports
     Route::get('/reports', [PharmacyReportController::class, 'index'])->name('reports');

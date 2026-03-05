@@ -161,4 +161,43 @@ class PermissionController extends Controller
 
         return response()->json($permissions);
     }
+
+    /**
+     * Bulk update permission status.
+     */
+    public function bulkStatus(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:permissions,id',
+            'is_active' => 'required|boolean'
+        ]);
+
+        Permission::whereIn('id', $validated['ids'])->update([
+            'is_active' => $validated['is_active']
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status updated for ' . count($validated['ids']) . ' permissions.'
+        ]);
+    }
+
+    /**
+     * Bulk remove permissions.
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:permissions,id'
+        ]);
+
+        Permission::whereIn('id', $validated['ids'])->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => count($validated['ids']) . ' permissions purged successfully.'
+        ]);
+    }
 }

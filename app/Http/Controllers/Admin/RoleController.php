@@ -65,7 +65,7 @@ class RoleController extends Controller
         }
 
         return redirect()
-            ->route('admin.roles.show', $role)
+            ->route('admin.roles.index')
             ->with('success', 'Role created successfully');
     }
 
@@ -74,9 +74,7 @@ class RoleController extends Controller
      */
     public function show(Role $role)
     {
-        $role->load(['permissions', 'branch', 'users']);
-
-        return view('admin.roles.show', compact('role'));
+        return redirect()->route('admin.roles.index');
     }
 
     /**
@@ -116,7 +114,7 @@ class RoleController extends Controller
         }
 
         return redirect()
-            ->route('admin.roles.show', $role)
+            ->route('admin.roles.index')
             ->with('success', 'Role updated successfully');
     }
 
@@ -161,7 +159,7 @@ class RoleController extends Controller
         $newRole = $this->roleService->cloneRoleToBranch($role, $request->branch_id);
 
         return redirect()
-            ->route('admin.roles.show', $newRole)
+            ->route('admin.roles.index')
             ->with('success', 'Role cloned successfully');
     }
 

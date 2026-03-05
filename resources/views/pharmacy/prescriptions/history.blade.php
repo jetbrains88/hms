@@ -579,7 +579,7 @@
                         </th>
                         <th scope="col" class="px-5 py-4 text-center">
                             <div class="flex items-center gap-2 text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                <i class="fas fa-cogs text-gray-500"></i>
+                                <i class="fas fa-cogs text-orange-500"></i>
                                 Actions
                             </div>
                         </th>
