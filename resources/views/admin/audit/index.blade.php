@@ -2,7 +2,7 @@
 
 @section('title', 'System Audit Trail - NHMP HMS')
 @section('page-title', 'Security & Audit Logs')
-@section('breadcrumb', 'Audit Logs')
+@section('breadcrumb', 'Administration / Audit Logs')
 
 @section('content')
 <div x-data="auditManagement({{ json_encode($entityTypes) }}, {{ json_encode($actions) }})" x-init="init()" class="space-y-6">

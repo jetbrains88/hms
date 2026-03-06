@@ -1,9 +1,8 @@
-{{-- resources/views/admin/roles/index.blade.php --}}
 @extends('layouts.app')
 
 @section('title', 'Role Management - NHMP HMS')
 @section('page-title', 'Role Management')
-@section('breadcrumb', 'Roles')
+@section('breadcrumb', 'Administration / Roles')
 
 @section('content')
     <div x-data="roleManagement({{ json_encode($permissions) }})" x-init="init()" class="space-y-6">

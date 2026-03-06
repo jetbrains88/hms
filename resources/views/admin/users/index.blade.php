@@ -2,7 +2,7 @@
 
 @section('title', 'User Management - NHMP HMS')
 @section('page-title', 'User Management')
-@section('breadcrumb', 'Users')
+@section('breadcrumb', 'Administration / Users')
 
 @section('content')
     <div x-data="userManagement({{ json_encode($roles) }}, {{ json_encode($branches) }})" x-init="init()" class="space-y-6">

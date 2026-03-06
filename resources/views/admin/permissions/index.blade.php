@@ -59,10 +59,10 @@
                 <i class="fas fa-layer-group text-xl text-white drop-shadow-md"></i>
             </div>
             <div class="p-4 text-right pt-4">
-                <p class="text-xs font-bold tracking-wider text-purple-600 uppercase">Module Groups</p>
-                <h4 class="text-3xl font-bold text-purple-900 drop-shadow-sm font-mono" x-text="stats.groups">0</h4>
+                <p class="text-xs font-bold tracking-wider text-fuchsia-600 uppercase">Module Groups</p>
+                <h4 class="text-3xl font-bold text-fuchsia-900 drop-shadow-sm font-mono" x-text="stats.groups">0</h4>
             </div>
-            <div class="mx-4 mb-4 border-t border-purple-200 pt-2 text-purple-700">
+            <div class="mx-4 mb-4 border-t border-purple-200 pt-2 text-fuchsia-700">
                 <span class="text-[10px] font-bold uppercase tracking-tight">Logical Categories</span>
             </div>
         </div>
@@ -268,7 +268,7 @@
                                     <td class="px-5 py-4">
                                         <div class="flex items-center gap-3">
                                             <div class="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"
-                                                 :class="permission.is_active ? 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white' : 'bg-slate-100 text-slate-400'">
+                                                 :class="permission.is_active ? 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white' : 'bg-gradient-to-br from-rose-400 to-maroon-500 text-white'">
                                                 <i class="fas fa-shield-alt text-sm"></i>
                                             </div>
                                             <div>
@@ -278,11 +278,13 @@
                                         </div>
                                     </td>
                                     <td class="px-5 py-4 whitespace-nowrap">
-                                        <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-slate-200" x-text="permission.group"></span>
+                                        <i class="fas fa-cube text-xs text-blue-600"></i>
+                                        <span class="px-3 py-1 text-slate-600 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-slate-200" x-text="permission.group">
+                                        </span>
                                     </td>
                                     <td class="px-5 py-4">
                                         <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all"
-                                              :class="permission.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'">
+                                              :class="permission.is_active ? 'text-emerald-700' : 'text-rose-700'">
                                             <i class="fas" :class="permission.is_active ? 'fa-check-circle' : 'fa-clock'"></i>
                                             <span x-text="permission.is_active ? 'Authorized' : 'Locked'"></span>
                                         </span>
@@ -293,7 +295,7 @@
                                                 <i class="fas fa-edit"></i> Edit
                                             </button>
                                             <button @click="toggleStatus(permission)" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider" 
-                                                    :class="permission.is_active ? 'text-amber-600 hover:bg-amber-100' : 'text-emerald-600 hover:bg-emerald-100'">
+                                                    :class="permission.is_active ? 'text-orange-600 hover:bg-orange-100' : 'text-emerald-600 hover:bg-emerald-100'">
                                                 <i class="fas" :class="permission.is_active ? 'fa-ban' : 'fa-check-circle'"></i>
                                                 <span x-text="permission.is_active ? 'Deactivate' : 'Activate'"></span>
                                             </button>

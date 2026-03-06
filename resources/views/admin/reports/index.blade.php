@@ -2,7 +2,7 @@
 
 @section('title', 'Reports')
 
-@section('page-title', 'Reports Dashboard')
+@section('page-title', 'Administration / Reports')
 
 @section('content')
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

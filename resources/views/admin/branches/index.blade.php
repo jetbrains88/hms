@@ -2,7 +2,7 @@
 
 @section('title', 'Branch Management - NHMP HMS')
 @section('page-title', 'Branch Management')
-@section('breadcrumb', 'Branches')
+@section('breadcrumb', 'Administration / Branches')
 
 @section('content')
 <div x-data="branchManagement({{ json_encode($offices) }})" x-init="init()" class="space-y-6">

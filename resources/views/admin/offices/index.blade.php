@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Office Management')
-@section('page-title', 'Office Management')
+@section('page-title', 'Administration / Office')
 
 @section('content')
 <div class="p-6">
