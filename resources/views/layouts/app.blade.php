@@ -556,6 +556,17 @@
                                     <i class="fas fa-calendar-alt w-6 text-center"></i>
                                     <span class="ml-2">Appointments</span>
                                 </a>
+                                <div class="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2 border-t border-slate-100 pt-2">Setup Config</div>
+                                <a href="{{ route('reception.offices.index') }}"
+                                    class="flex items-center px-3 py-2 text-sm rounded-xl hover:bg-pink-50 {{ request()->routeIs('reception.offices.*') ? 'text-pink-600 bg-pink-50' : 'text-slate-600' }}">
+                                    <i class="fas fa-sitemap w-6 text-center"></i>
+                                    <span class="ml-2">Offices & HQ</span>
+                                </a>
+                                <a href="{{ route('reception.designations.index') }}"
+                                    class="flex items-center px-3 py-2 text-sm rounded-xl hover:bg-pink-50 {{ request()->routeIs('reception.designations.*') ? 'text-pink-600 bg-pink-50' : 'text-slate-600' }}">
+                                    <i class="fas fa-id-badge w-6 text-center"></i>
+                                    <span class="ml-2">Designations</span>
+                                </a>
                             </div>
                         </div>
                     @endif
@@ -606,7 +617,7 @@
                                     <i class="fas fa-boxes w-6 text-center"></i>
                                     <span class="ml-2">Inventory</span>
                                 </a>
-                                <a href="{{ route('pharmacy.alerts.index') }}"
+                                <a href="{{ Route::has('pharmacy.alerts.index') ? route('pharmacy.alerts.index') : '#' }}"
                                     class="flex items-center px-3 py-2 text-sm rounded-xl hover:bg-amber-50 {{ request()->routeIs('pharmacy.alerts.*') ? 'text-amber-600 bg-amber-50' : 'text-slate-600' }}">
                                     <i class="fas fa-exclamation-triangle w-6 text-center"></i>
                                     <span class="ml-2">Alerts</span>
@@ -632,6 +643,17 @@
                                     class="flex items-center px-3 py-2 text-sm rounded-xl hover:bg-amber-50 {{ request()->routeIs('pharmacy.reports') ? 'text-amber-600 bg-amber-50' : 'text-slate-600' }}">
                                     <i class="fas fa-chart-bar w-6 text-center"></i>
                                     <span class="ml-2">Reports</span>
+                                </a>
+                                <div class="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2 border-t border-slate-100 pt-2">Setup Config</div>
+                                <a href="{{ route('pharmacy.medicine-categories.index') }}"
+                                    class="flex items-center px-3 py-2 text-sm rounded-xl hover:bg-amber-50 {{ request()->routeIs('pharmacy.medicine-categories.*') ? 'text-amber-600 bg-amber-50' : 'text-slate-600' }}">
+                                    <i class="fas fa-tags w-6 text-center"></i>
+                                    <span class="ml-2">Categories</span>
+                                </a>
+                                <a href="{{ route('pharmacy.medicine-forms.index') }}"
+                                    class="flex items-center px-3 py-2 text-sm rounded-xl hover:bg-amber-50 {{ request()->routeIs('pharmacy.medicine-forms.*') ? 'text-amber-600 bg-amber-50' : 'text-slate-600' }}">
+                                    <i class="fas fa-capsules w-6 text-center"></i>
+                                    <span class="ml-2">Dosage Forms</span>
                                 </a>
                             </div>
                         </div>
@@ -665,6 +687,17 @@
                                     class="flex items-center px-3 py-2 text-sm rounded-xl hover:bg-purple-50 {{ request()->routeIs('lab.reports.*') ? 'text-purple-600 bg-purple-50' : 'text-slate-600' }}">
                                     <i class="fas fa-file-pdf w-6 text-center"></i>
                                     <span class="ml-2">Reports</span>
+                                </a>
+                                <div class="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2 border-t border-slate-100 pt-2">Setup Config</div>
+                                <a href="{{ route('lab.test-types.index') }}"
+                                    class="flex items-center px-3 py-2 text-sm rounded-xl hover:bg-purple-50 {{ request()->routeIs('lab.test-types.*') ? 'text-purple-600 bg-purple-50' : 'text-slate-600' }}">
+                                    <i class="fas fa-microscope w-6 text-center"></i>
+                                    <span class="ml-2">Test Types</span>
+                                </a>
+                                <a href="{{ route('lab.test-parameters.index') }}"
+                                    class="flex items-center px-3 py-2 text-sm rounded-xl hover:bg-purple-50 {{ request()->routeIs('lab.test-parameters.*') ? 'text-purple-600 bg-purple-50' : 'text-slate-600' }}">
+                                    <i class="fas fa-list-alt w-6 text-center"></i>
+                                    <span class="ml-2">Parameters</span>
                                 </a>
                             </div>
                         </div>

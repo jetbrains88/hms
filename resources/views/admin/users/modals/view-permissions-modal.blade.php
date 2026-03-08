@@ -9,10 +9,10 @@
         <div class="p-6">
             <!-- User Info -->
             <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg mb-6">
-                <div class="h-16 w-16 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg"
+                <!-- <div class="h-16 w-16 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg"
                      :class="selectedUser ? getAvatarColor(selectedUser.name) : 'bg-gray-400'">
                     <span x-text="selectedUser ? getInitials(selectedUser.name) : ''"></span>
-                </div>
+                </div> -->
                 <div>
                     <h4 class="text-xl font-bold text-gray-900" x-text="selectedUser?.name"></h4>
                     <p class="text-gray-600" x-text="selectedUser?.email"></p>

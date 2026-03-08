@@ -152,6 +152,14 @@ class PermissionController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
+        // Date range filtering
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
         // Sort
         $sort = $request->get('sort', 'name');
         $direction = $request->get('direction', 'asc');

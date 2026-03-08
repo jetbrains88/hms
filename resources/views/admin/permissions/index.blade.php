@@ -5,14 +5,33 @@
 @section('breadcrumb', 'Administration / Permissions')
 
 @section('content')
-<div x-data="permissionManagement()" x-init="init()" x-cloak class="space-y-8">
+<div x-data="permissionManagement()" x-init="init()" x-cloak class="space-y-8 relative">
+
+    {{-- Futuristic Floating Filter Toggle --}}
+    <button @click="showSidebar = true"
+        x-show="!showSidebar"
+        x-transition:enter="transition ease-out duration-500 delay-100"
+        x-transition:enter-start="translate-x-full opacity-0"
+        x-transition:enter-end="translate-x-0 opacity-100"
+        x-transition:leave="transition ease-in duration-300"
+        x-transition:leave-start="translate-x-0 opacity-100"
+        x-transition:leave-end="translate-x-full opacity-0"
+        class="fixed top-1/2 right-0 -translate-y-1/2 z-40 bg-gradient-to-b from-indigo-500 to-indigo-700 text-white p-2.5 py-6 rounded-l-2xl shadow-[0_0_30px_-5px_rgba(79,70,229,0.4)] hover:shadow-[-5px_0_40px_-5px_rgba(79,70,229,0.7)] hover:pr-4 transition-all duration-300 flex flex-col items-center gap-4 border-y border-l border-indigo-400/50 group cursor-pointer"
+        title="Open Permission Filters">
+        <div class="relative">
+            <div class="absolute inset-0 bg-white/20 blur-md rounded-full group-hover:bg-white/40 transition-colors duration-300"></div>
+            <i class="fas fa-sliders-h relative z-10 drop-shadow-lg group-hover:rotate-90 transition-transform duration-500 text-sm"></i>
+        </div>
+        <span style="writing-mode: vertical-rl;" class="text-[9px] font-black uppercase tracking-[0.3em] rotate-180 drop-shadow-md text-indigo-50">Security Filters</span>
+    </button>
 
     {{-- ═══════════════════════════════════════════════
          STATS CARDS - Vibrant Premium Style
     ═══════════════════════════════════════════════ --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 gap-y-10 mt-4">
         <!-- Total Permissions Card -->
-        <div class="relative flex flex-col bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl shadow-lg shadow-blue-500/20 border border-blue-200 hover:-translate-y-2 transition-all duration-300 group">
+        <div class="relative flex flex-col bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl shadow-lg shadow-blue-500/20 border border-blue-200 hover:-translate-y-2 transition-all duration-300 group cursor-pointer"
+             @click="clearFilters()">
             <div class="absolute -top-6 left-4 h-14 w-14 grid place-items-center rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 shadow-lg shadow-blue-900/30 border border-blue-300 group-hover:scale-110 transition-transform duration-300">
                 <i class="fas fa-shield-alt text-xl text-white drop-shadow-md"></i>
             </div>
@@ -29,7 +48,8 @@
         </div>
 
         <!-- Active Permissions Card -->
-        <div class="relative flex flex-col bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl shadow-lg shadow-emerald-500/20 border border-emerald-200 hover:-translate-y-2 transition-all duration-300 group">
+        <div class="relative flex flex-col bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl shadow-lg shadow-emerald-500/20 border border-emerald-200 hover:-translate-y-2 transition-all duration-300 group cursor-pointer"
+             @click="filterStatus = 'active'; searchPermissions()">
             <div class="absolute -top-6 left-4 h-14 w-14 grid place-items-center rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 shadow-lg shadow-emerald-900/30 border border-emerald-300 group-hover:scale-110 transition-transform duration-300">
                 <i class="fas fa-check-circle text-xl text-white drop-shadow-md"></i>
             </div>
@@ -46,7 +66,8 @@
         </div>
 
         <!-- Inactive Permissions Card -->
-        <div class="relative flex flex-col bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl shadow-lg shadow-rose-500/20 border border-rose-200 hover:-translate-y-2 transition-all duration-300 group">
+        <div class="relative flex flex-col bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl shadow-lg shadow-rose-500/20 border border-rose-200 hover:-translate-y-2 transition-all duration-300 group cursor-pointer"
+             @click="filterStatus = 'inactive'; searchPermissions()">
             <div class="absolute -top-6 left-4 h-14 w-14 grid place-items-center rounded-xl bg-gradient-to-tr from-rose-600 to-pink-400 shadow-lg shadow-rose-900/30 border border-rose-300 group-hover:scale-110 transition-transform duration-300">
                 <i class="fas fa-ban text-xl text-white drop-shadow-md"></i>
             </div>
@@ -63,7 +84,8 @@
         </div>
 
         <!-- Groups Card -->
-        <div class="relative flex flex-col bg-gradient-to-br from-purple-50 to-fuchsia-50 rounded-2xl shadow-lg shadow-purple-500/20 border border-purple-200 hover:-translate-y-2 transition-all duration-300 group">
+        <div class="relative flex flex-col bg-gradient-to-br from-purple-50 to-fuchsia-50 rounded-2xl shadow-lg shadow-purple-500/20 border border-purple-200 hover:-translate-y-2 transition-all duration-300 group cursor-pointer"
+             @click="viewMode = 'grid'">
             <div class="absolute -top-6 left-4 h-14 w-14 grid place-items-center rounded-xl bg-gradient-to-tr from-purple-600 to-fuchsia-400 shadow-lg shadow-purple-900/30 border border-purple-300 group-hover:scale-110 transition-transform duration-300">
                 <i class="fas fa-layer-group text-xl text-white drop-shadow-md"></i>
             </div>
@@ -83,141 +105,93 @@
     {{-- ═══════════════════════════════════════════════
          MAIN CONTROL PANEL
     ═══════════════════════════════════════════════ --}}
-    <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden transition-all duration-500">
-        
-        {{-- Panel Header with Light Gradient (Matches User Management) --}}
-        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-indigo-100/50">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div class="flex items-center gap-4">
-                    <div class="w-14 h-14 rounded-2xl bg-white flex items-center justify-center border border-indigo-100 shadow-sm transition-transform hover:scale-105 duration-300">
-                        <i class="fas fa-shield-alt text-2xl text-indigo-600"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight flex items-center gap-3">
-                            Permission Vault
-                            <span class="text-lg font-normal text-gray-600">
-                                (<span x-text="pagination.total"></span> records)
-                            </span>
-                        </h2>
-                        <p class="text-gray-600 text-sm font-medium mt-1">Control and access management system</p>
-                    </div>
-                </div>
+    <div class="mt-8 grid lg:grid-cols-12 gap-6 items-start">
 
-                <div class="flex flex-wrap gap-4 items-center">
-                    <button @click="openAddModal()"
-                        class="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/40 transition-all active:scale-95 group">
-                        <i class="fas fa-plus group-hover:rotate-180 transition-transform duration-500"></i>
-                        Add Permission
-                    </button>
-                    
-                    <button @click="fetchPermissions()" 
-                        class="w-10 h-10 flex items-center justify-center bg-white border border-indigo-100 text-indigo-600 rounded-xl hover:bg-indigo-50 transition-colors shadow-sm"
-                        title="Refresh">
-                        <i class="fas fa-sync-alt" :class="loading ? 'animate-spin' : ''"></i>
-                    </button>
+        {{-- Left Column - Permission Vault Table --}}
+        <div class="space-y-6 transition-all duration-300" :class="showSidebar ? 'lg:col-span-9' : 'lg:col-span-12'">
+            <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden transition-all duration-500 flex flex-col">
+            
+            {{-- Panel Header with Light Gradient (Matches User Management) --}}
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-indigo-100/50">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-white flex items-center justify-center border border-indigo-100 shadow-sm transition-transform hover:scale-105 duration-300">
+                            <i class="fas fa-shield-alt text-2xl text-indigo-600"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight flex items-center gap-3">
+                                Permission Vault
+                                <span class="text-lg font-normal text-gray-600">
+                                    (<span x-text="pagination.total"></span> records)
+                                </span>
+                            </h2>
+                            <p class="text-gray-600 text-sm font-medium mt-1">Control and access management system</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-4 items-center">
+                        {{-- Rows Selector moved here --}}
+                        <div class="flex items-center gap-2 bg-white border border-indigo-100 rounded-xl px-3 py-1.5 shadow-sm">
+                            <span class="text-[9px] font-black text-slate-400 border-r border-slate-100 pr-2 uppercase">Rows</span>
+                            <select x-model="pagination.per_page" @change="searchPermissions()" class="bg-transparent text-indigo-600 text-[10px] font-black uppercase cursor-pointer outline-none focus:ring-0 border-none p-0 pr-4">
+                                <option value="10">10</option>
+                                <option value="15">15</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+
+                        <button @click="openAddModal()"
+                            class="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/40 transition-all active:scale-95 group">
+                            <i class="fas fa-plus group-hover:rotate-180 transition-transform duration-500"></i>
+                            Add Permission
+                        </button>
+                        <button @click="showSidebar = !showSidebar"
+                            class="w-10 h-10 flex items-center justify-center bg-white border border-indigo-100 text-indigo-600 rounded-xl hover:bg-indigo-50 transition-colors shadow-sm"
+                            :title="showSidebar ? 'Hide Filters' : 'Show Filters'">
+                            <i class="fas" :class="showSidebar ? 'fa-eye-slash' : 'fa-filter'"></i>
+                        </button>
+                        
+                        <button @click="fetchPermissions()" 
+                            class="w-10 h-10 flex items-center justify-center bg-white border border-indigo-100 text-indigo-600 rounded-xl hover:bg-indigo-50 transition-colors shadow-sm"
+                            title="Refresh">
+                            <i class="fas fa-sync-alt" :class="loading ? 'animate-spin' : ''"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        {{-- Toolbar with Advanced Search & Filter --}}
-        <div class="p-6 border-b border-slate-100 bg-slate-50/50">
-            <div class="flex flex-col lg:flex-row justify-between items-center gap-6">
                 
-                {{-- Floating Search Bar --}}
-                <div class="relative w-full lg:w-[450px] group">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <i class="fas fa-search text-slate-400 group-focus-within:text-indigo-600 transition-colors"></i>
-                    </div>
-                    <input type="text" x-model="searchQuery" @input.debounce.400ms="searchPermissions()"
-                        placeholder="Search mission-critical permissions..."
-                        class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-sm group-hover:shadow-md font-medium text-slate-700">
-                </div>
 
-                <div class="flex items-center gap-4 w-full lg:w-auto">
-                    <div class="flex-1 lg:flex-none flex items-center bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm">
-                        <button @click="viewMode = 'table'" 
-                            :class="viewMode === 'table' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'"
-                            class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 uppercase tracking-wider">
-                            <i class="fas fa-table"></i> Table
-                        </button>
-                        <button @click="viewMode = 'grid'"
-                            :class="viewMode === 'grid' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'"
-                            class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 uppercase tracking-wider">
-                            <i class="fas fa-th-large"></i> Grouped
-                        </button>
+                {{-- Bulk Actions Toolbar (Sticky below view controller) --}}
+                <div x-show="selectedIds.length > 0" 
+                     x-transition:enter="transition ease-out duration-300 transform"
+                     x-transition:enter-start="-translate-y-full"
+                     x-transition:enter-end="translate-y-0"
+                     class="bg-indigo-600 px-6 py-3 flex items-center justify-between text-white sticky top-[68px] z-10 shadow-2xl">
+                    <div class="flex items-center gap-4">
+                        <span class="text-[10px] font-black uppercase tracking-widest border-r border-white/20 pr-4">
+                            <span x-text="selectedIds.length"></span> Access Points Selected
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <button @click="bulkStatus(true)" class="px-3 py-1.5 bg-white/10 hover:bg-white text-white hover:text-indigo-600 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">Authorize All</button>
+                            <button @click="bulkStatus(false)" class="px-3 py-1.5 bg-white/10 hover:bg-white text-white hover:text-indigo-600 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">Lock Selection</button>
+                            <button @click="bulkDelete()" class="px-3 py-1.5 bg-rose-500/80 hover:bg-rose-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">Purge Security</button>
+                        </div>
                     </div>
-
-                    <button @click="showAdvancedFilters = !showAdvancedFilters"
-                        class="px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2"
-                        :class="showAdvancedFilters ? 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-xl' : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-xl'">
-                        <i class="fas fa-sliders-h"></i> Filters
+                    <button @click="selectedIds = []" class="text-[10px] font-black uppercase tracking-widest opacity-70 hover:opacity-100 transition-opacity flex items-center gap-2">
+                        Dismiss <i class="fas fa-times"></i>
                     </button>
                 </div>
-            </div>
 
-            {{-- Collapsible Filter Panel --}}
-            <div x-show="showAdvancedFilters" x-collapse x-cloak>
-                <div class="mt-8 p-8 bg-white rounded-3xl border border-indigo-100 shadow-2xl shadow-indigo-500/10 grid grid-cols-1 md:grid-cols-3 gap-8 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full -mr-16 -mt-16"></div>
-                    
-                    <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Module Category</label>
-                        <select x-model="filterGroup" @change="searchPermissions()"
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 outline-none font-bold text-slate-700 cursor-pointer">
-                            <option value="">All Categories</option>
-                            <template x-for="group in availableGroups" :key="group">
-                                <option :value="group" x-text="formatGroupName(group)"></option>
-                            </template>
-                        </select>
-                    </div>
+                {{-- View Content --}}
+                <div class="relative min-h-[400px]">
+                    {{-- Table View --}}
+                    <div x-show="viewMode === 'table'" x-transition>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gradient-to-r from-indigo-100 to-indigo-100 border-b-2 border-indigo-200/50">
 
-                    <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Security Status</label>
-                        <select x-model="filterStatus" @change="searchPermissions()"
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 outline-none font-bold text-slate-700 cursor-pointer">
-                            <option value="">Full System</option>
-                            <option value="active">Active Entry Points</option>
-                            <option value="inactive">Locked Entry Points</option>
-                        </select>
-                    </div>
-
-                    <div class="flex items-end gap-3">
-                        <button @click="clearFilters()" 
-                            class="flex-1 py-3 bg-rose-50 text-rose-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all">
-                            Reset Filters
-                        </button>
-                        <button @click="fetchPermissions()"
-                            class="flex-1 py-3 bg-indigo-50 text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">
-                            Apply Optimized
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Bulk Actions Toolbar (Conditional) --}}
-        <div x-show="selectedIds.length > 0" x-transition:enter="translate-y-full" x-transition:enter-end="translate-y-0"
-            class="bg-indigo-600 px-6 py-3 flex items-center justify-between text-white sticky top-0 z-20 shadow-2xl">
-            <div class="flex items-center gap-4">
-                <span class="text-xs font-black uppercase tracking-widest border-r border-white/20 pr-4">
-                    <span x-text="selectedIds.length"></span> Items Selected
-                </span>
-                <div class="flex items-center gap-2">
-                    <button @click="bulkStatus(true)" class="px-3 py-1.5 bg-white/10 hover:bg-white text-white hover:text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">Enable All</button>
-                    <button @click="bulkStatus(false)" class="px-3 py-1.5 bg-white/10 hover:bg-white text-white hover:text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">Disable All</button>
-                    <button @click="bulkDelete()" class="px-3 py-1.5 bg-rose-500/80 hover:bg-rose-500 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">Purge Selection</button>
-                </div>
-            </div>
-            <button @click="selectedIds = []" class="text-xs font-black uppercase tracking-widest opacity-70 hover:opacity-100">Cancel</button>
-        </div>
-
-        {{-- View Content --}}
-        <div class="relative min-h-[400px]">
-            {{-- Table View --}}
-            <div x-show="viewMode === 'table'" x-transition>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-gradient-to-r from-slate-100 via-indigo-50 to-blue-100 border-b-2 border-indigo-200/50">
                             <tr>
                                 <th class="px-5 py-5 w-10">
                                     <div class="flex items-center justify-center">
@@ -304,16 +278,19 @@
                                         </span>
                                     </td>
                                     <td class="px-5 py-4 text-center whitespace-nowrap">
-                                        <div class="flex items-center justify-center gap-1">
-                                            <button @click="editPermission(permission)" class="flex items-center gap-1.5 px-3 py-1.5 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider" title="Edit Controller">
+                                        <div class="flex flex-col items-center justify-center gap-1">
+                                            <button @click="openViewModal(permission)" class="w-full flex items-center gap-1.5 px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider" title="View Details">
+                                                <i class="fas fa-eye"></i> View
+                                            </button>
+                                            <button @click="editPermission(permission)" class="w-full flex items-center gap-1.5 px-3 py-1.5 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider" title="Edit Controller">
                                                 <i class="fas fa-edit"></i> Edit
                                             </button>
-                                            <button @click="toggleStatus(permission)" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider" 
+                                            <button @click="toggleStatus(permission)" class="w-full flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider" 
                                                     :class="permission.is_active ? 'text-orange-600 hover:bg-orange-100' : 'text-emerald-600 hover:bg-emerald-100'">
                                                 <i class="fas" :class="permission.is_active ? 'fa-ban' : 'fa-check-circle'"></i>
                                                 <span x-text="permission.is_active ? 'Deactivate' : 'Activate'"></span>
                                             </button>
-                                            <button @click="confirmDelete(permission)" class="flex items-center gap-1.5 px-3 py-1.5 text-rose-600 hover:bg-rose-100 rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider">
+                                            <button @click="confirmDelete(permission)" class="w-full flex items-center gap-1.5 px-3 py-1.5 text-rose-600 hover:bg-rose-100 rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider">
                                                 <i class="fas fa-trash-alt"></i> Delete
                                             </button>
                                         </div>
@@ -339,7 +316,7 @@
                                 <div class="flex-1 border-b border-dashed border-slate-200"></div>
                                 <span class="bg-indigo-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20" x-text="groupPerms.length + ' points'"></span>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div class="grid grid-cols-1 gap-4 transition-all duration-300" :class="showSidebar ? 'md:grid-cols-2 xl:grid-cols-3' : 'md:grid-cols-2 xl:grid-cols-2'">
                                 <template x-for="p in groupPerms" :key="p.id">
                                     <div class="bg-white border-2 border-indigo-500 rounded-3xl p-5 hover:border-frusia-500 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all group relative overflow-hidden"
                                         :class="selectedIds.includes(p.id) ? 'border-indigo-500 bg-indigo-50/30' : ''">
@@ -368,6 +345,7 @@
                                                 </span>
                                             </div>
                                             <div class="flex gap-1">
+                                                <button @click="openViewModal(p)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-sky-600 text-white hover:bg-sky-500 hover:text-white transition-all shadow-sm" title="View"><i class="fas fa-eye text-[10px]"></i></button>
                                                 <button @click="editPermission(p)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-600 text-white hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="Edit"><i class="fas fa-edit text-[10px]"></i></button>
                                                 <button @click="toggleStatus(p)" class="w-8 h-8 flex items-center justify-center rounded-lg transition-all shadow-sm" :class="p.is_active ? 'bg-amber-600 text-white hover:bg-amber-500 hover:text-white' : 'bg-emerald-600 text-white hover:bg-emerald-500 hover:text-white'" :title="p.is_active ? 'Deactivate' : 'Activate'"><i class="fas text-[10px]" :class="p.is_active ? 'fa-ban' : 'fa-check-circle'"></i></button>
                                                 <button @click="confirmDelete(p)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-600 text-white hover:bg-rose-500 hover:text-white transition-all shadow-sm" title="Delete"><i class="fas fa-trash-alt text-[10px]"></i></button>
@@ -399,47 +377,252 @@
                 <button @click="clearFilters()" class="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-500/40 hover:scale-105 transition-all">Reset Security Clearance</button>
             </div>
         </div>
+        {{-- /end: View Content (relative min-h-[400px]) --}}
 
         {{-- Premium Pagination --}}
-        <div x-show="!loading && permissions.length > 0" class="p-8 bg-slate-50 border-t border-slate-100">
+        <div x-show="!loading && permissions.length > 0" class="p-8 bg-slate-50 border-t border-slate-100 mt-auto">
             <div class="flex flex-col md:flex-row items-center justify-between gap-8">
-                <div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                    Displaying <span class="text-slate-900" x-text="pagination.from"></span> - <span class="text-slate-900" x-text="pagination.to"></span> 
-                    <span class="mx-2 overflow-hidden bg-slate-200 w-8 h-[2px] inline-block align-middle"></span> 
-                    Source: <span class="text-indigo-600" x-text="pagination.total"></span> Entries
+                <div class="flex flex-col md:flex-row items-center gap-4">
+                    <div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                        Displaying <span class="text-slate-900" x-text="pagination.from"></span> - <span class="text-slate-900" x-text="pagination.to"></span> 
+                        <span class="mx-2 overflow-hidden bg-slate-200 w-8 h-[2px] inline-block align-middle"></span> 
+                        Source: <span class="text-indigo-600" x-text="pagination.total"></span> Entries
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-2">
+                    {{-- First Button --}}
                     <button @click="changePage(1)" :disabled="pagination.current_page === 1"
-                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 shadow-sm hover:border-indigo-600 hover:text-indigo-600 disabled:opacity-30 disabled:pointer-events-none transition-all">
-                        <i class="fas fa-angle-double-left text-xs"></i>
+                        class="px-3 h-10 flex items-center gap-2 rounded-xl bg-white border border-slate-200 text-slate-600 shadow-sm hover:border-indigo-600 hover:text-indigo-600 disabled:opacity-30 disabled:pointer-events-none transition-all group">
+                        <i class="fas fa-angles-left text-[10px]"></i>
+                        <span class="text-[10px] font-black uppercase tracking-widest hidden sm:inline">First</span>
                     </button>
+
+                    {{-- Previous Button --}}
                     <button @click="changePage(pagination.current_page - 1)" :disabled="pagination.current_page === 1"
-                        class="w-12 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 shadow-sm hover:border-indigo-600 hover:text-indigo-600 disabled:opacity-30 disabled:pointer-events-none transition-all">
-                        <i class="fas fa-chevron-left text-xs"></i>
+                        class="px-3 h-10 flex items-center gap-2 rounded-xl bg-white border border-slate-200 text-slate-600 shadow-sm hover:border-indigo-600 hover:text-indigo-600 disabled:opacity-30 disabled:pointer-events-none transition-all group">
+                        <i class="fas fa-chevron-left text-[10px]"></i>
+                        <span class="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Prev</span>
                     </button>
 
-                    <template x-for="page in getPageRange()" :key="page">
-                        <button @click="page !== '...' && changePage(page)"
-                            :class="page === pagination.current_page ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 border-indigo-600 scale-110' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-600 hover:text-indigo-600'"
-                            :disabled="page === '...'"
-                            class="w-10 h-10 rounded-xl border text-xs font-black transition-all"
-                            x-text="page">
-                        </button>
-                    </template>
+                    <div class="flex items-center gap-1.5 mx-2">
+                        <template x-for="page in getPageRange()" :key="page">
+                            <button @click="page !== '...' && changePage(page)"
+                                :class="page === pagination.current_page ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 border-indigo-600 scale-105' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-600 hover:text-indigo-600'"
+                                :disabled="page === '...'"
+                                class="w-10 h-10 rounded-xl border text-[10px] font-black transition-all flex items-center justify-center"
+                                x-text="page">
+                            </button>
+                        </template>
+                    </div>
 
+                    {{-- Next Button --}}
                     <button @click="changePage(pagination.current_page + 1)" :disabled="pagination.current_page === pagination.last_page"
-                        class="w-12 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 shadow-sm hover:border-indigo-600 hover:text-indigo-600 disabled:opacity-30 disabled:pointer-events-none transition-all">
-                        <i class="fas fa-chevron-right text-xs"></i>
+                        class="px-3 h-10 flex items-center gap-2 rounded-xl bg-white border border-slate-200 text-slate-600 shadow-sm hover:border-indigo-600 hover:text-indigo-600 disabled:opacity-30 disabled:pointer-events-none transition-all group">
+                        <span class="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Next</span>
+                        <i class="fas fa-chevron-right text-[10px]"></i>
                     </button>
+
+                    {{-- Last Button --}}
                     <button @click="changePage(pagination.last_page)" :disabled="pagination.current_page === pagination.last_page"
-                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 shadow-sm hover:border-indigo-600 hover:text-indigo-600 disabled:opacity-30 disabled:pointer-events-none transition-all">
-                        <i class="fas fa-angle-double-right text-xs"></i>
+                        class="px-3 h-10 flex items-center gap-2 rounded-xl bg-white border border-slate-200 text-slate-600 shadow-sm hover:border-indigo-600 hover:text-indigo-600 disabled:opacity-30 disabled:pointer-events-none transition-all group">
+                        <span class="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Last</span>
+                        <i class="fas fa-angles-right text-[10px]"></i>
+                    </button>
+                </div>
+                {{-- /end: pagination buttons --}}
+            </div>
+            {{-- /end: pagination flex row --}}
+        </div>
+        {{-- /end: Premium Pagination --}}
+
+        </div>
+        {{-- /end: Permission Vault white card --}}
+        </div>
+        {{-- /end: lg:col-span-9 Left Column --}}
+
+        {{-- Right Column - Security Filters Sidebar --}}
+        <div class="lg:col-span-3 lg:sticky lg:top-0 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto scrollbar-hide pb-2" style="scrollbar-width: none;" x-show="showSidebar" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 translate-x-4">
+            
+            {{-- Unified Filter Card --}}
+            <div class="bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden flex flex-col min-h-0">
+                
+                {{-- Master Header --}}
+                <div class="p-5 border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm">
+                            <i class="fas fa-filter text-sm"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-black text-slate-800 text-base tracking-tight">Permission Filters</h2>
+                            <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest mt-0.5">Refine Access Points</p>
+                        </div>
+                    </div>
+                    <button @click="showSidebar = false" class="w-8 h-8 flex flex-shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm" title="Hide Filters">
+                        <i class="fas fa-angle-right"></i>
+                    </button>
+                </div>
+
+                {{-- Scrollable Content --}}
+                <div class="overflow-y-auto scrollbar-hide flex-1 space-y-5 p-5" style="scrollbar-width: none;">
+                    
+                    {{-- Dynamic View Controller & Active Intelligence --}}
+                    <div class="space-y-4">
+                        <div class="flex items-center bg-slate-100 p-1.5 rounded-xl shadow-inner border border-slate-200/50">
+                    <button @click="viewMode = 'table'" 
+                        :class="viewMode === 'table' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                        class="flex-1 px-4 py-2 text-center rounded-lg text-[10px] font-black transition-all flex items-center justify-center gap-2 uppercase tracking-widest">
+                        <i class="fas fa-table"></i> Table
+                    </button>
+                    <button @click="viewMode = 'grid'"
+                        :class="viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                        class="flex-1 px-4 py-2 text-center rounded-lg text-[10px] font-black transition-all flex items-center justify-center gap-2 uppercase tracking-widest">
+                        <i class="fas fa-th-large"></i> Grid
+                    </button>
+                </div>
+
+                    <div x-show="hasActiveFilters()" class="space-y-2 pt-4 border-t border-slate-100">
+                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Active Intelligence:</span>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <template x-if="searchQuery">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg text-[9px] font-black uppercase tracking-widest group">
+                                <i class="fas fa-search opacity-50"></i>
+                                <span x-text="searchQuery"></span>
+                                <button @click="searchQuery=''; searchPermissions()" class="hover:text-rose-600 transition-colors"><i class="fas fa-times-circle"></i></button>
+                            </span>
+                        </template>
+                        <template x-if="filterGroup">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-purple-600 border border-purple-100 rounded-lg text-[9px] font-black uppercase tracking-widest group">
+                                <i class="fas fa-cubes opacity-50"></i>
+                                <span x-text="formatGroupName(filterGroup)"></span>
+                                <button @click="filterGroup=''; searchPermissions()" class="hover:text-rose-600 transition-colors"><i class="fas fa-times-circle"></i></button>
+                            </span>
+                        </template>
+                        <template x-if="filterStatus">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-[9px] font-black uppercase tracking-widest group">
+                                <i class="fas fa-check-circle opacity-50"></i>
+                                <span x-text="filterStatus.toUpperCase()"></span>
+                                <button @click="filterStatus=''; searchPermissions()" class="hover:text-rose-600 transition-colors"><i class="fas fa-times-circle"></i></button>
+                            </span>
+                        </template>
+                        <template x-if="filterDateFrom || filterDateTo">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 border border-amber-100 rounded-lg text-[9px] font-black uppercase tracking-widest group">
+                                <i class="fas fa-calendar-alt opacity-50"></i>
+                                <span x-text="getDateRangeText()"></span>
+                                <button @click="filterDateFrom=''; filterDateTo=''; searchPermissions()" class="hover:text-rose-600 transition-colors"><i class="fas fa-times-circle"></i></button>
+                            </span>
+                        </template>
+                        </div>
+                    </div>
+
+                    <div class="border-b border-dashed border-slate-200"></div>
+                    {{-- Search Module --}}
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <i class="fas fa-search text-indigo-500"></i> Localize Point
+                        </label>
+                        <div class="relative group">
+                            <input type="text" x-model="searchQuery" @input.debounce.500ms="searchPermissions()"
+                                placeholder="Search Display Name or Slug..."
+                                class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-2 border-slate-100 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold text-slate-600 text-sm shadow-inner group-hover:border-slate-200">
+                            <i class="fas fa-fingerprint absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
+                        </div>
+                    </div>
+
+                    {{-- Module Filter --}}
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <i class="fas fa-cubes text-purple-500"></i> Segment Module
+                        </label>
+                        <select x-model="filterGroup" @change="searchPermissions()"
+                            class="w-full px-4 py-2.5 bg-slate-50 border-2 border-slate-100 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold text-slate-600 text-sm shadow-inner appearance-none cursor-pointer">
+                            <option value="">All Module Clusters</option>
+                            <template x-for="group in availableGroups" :key="group">
+                                <option :value="group" x-text="formatGroupName(group)"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    {{-- Status Toggle --}}
+                    <div class="space-y-4">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <i class="fas fa-shield-virus text-emerald-500"></i> Auth Status
+                        </label>
+                        <div class="grid grid-cols-1 gap-2">
+                            <button @click="filterStatus = ''; searchPermissions()" 
+                                :class="filterStatus === '' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-2 border-slate-100 border-transparent'"
+                                class="px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-left flex items-center justify-between">
+                                <span>Global Data</span>
+                                <i class="fas fa-globe-americas transition-opacity" :class="filterStatus === '' ? 'opacity-100' : 'opacity-40'"></i>
+                            </button>
+                            <button @click="filterStatus = 'active'; searchPermissions()" 
+                                :class="filterStatus === 'active' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-2 border-slate-100 border-transparent'"
+                                class="px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-left flex items-center justify-between">
+                                <span>Authorized Only</span>
+                                <i class="fas fa-check-circle transition-opacity" :class="filterStatus === 'active' ? 'opacity-100' : 'opacity-40'"></i>
+                            </button>
+                            <button @click="filterStatus = 'inactive'; searchPermissions()" 
+                                :class="filterStatus === 'inactive' ? 'bg-rose-600 text-white shadow-lg shadow-rose-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-2 border-slate-100 border-transparent'"
+                                class="px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-left flex items-center justify-between">
+                                <span>Locked Vaults</span>
+                                <i class="fas fa-lock transition-opacity" :class="filterStatus === 'inactive' ? 'opacity-100' : 'opacity-40'"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Date Refinement --}}
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <i class="fas fa-calendar-alt text-amber-500"></i> Temporal Range
+                        </label>
+                        <div class="space-y-2">
+                            <input type="date" x-model="filterDateFrom" @change="searchPermissions()"
+                                class="w-full px-4 py-2.5 bg-slate-50 border-2 border-slate-100 rounded-xl focus:border-indigo-500 outline-none text-xs font-bold text-slate-600 transition-all shadow-inner">
+                            <input type="date" x-model="filterDateTo" @change="searchPermissions()"
+                                class="w-full px-4 py-2.5 bg-slate-50 border-2 border-slate-100 rounded-xl focus:border-indigo-500 outline-none text-xs font-bold text-slate-600 transition-all shadow-inner">
+                        </div>
+                    </div>
+
+                    {{-- Pagination Rows --}}
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <i class="fas fa-list-ol text-blue-500"></i> Display Rows
+                        </label>
+                        <div class="relative group">
+                            <select x-model="pagination.per_page" @change="searchPermissions()"
+                                class="w-full pl-4 pr-10 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold text-slate-600 text-xs shadow-inner appearance-none cursor-pointer group-hover:border-slate-200">
+                                <option value="10">10 Rows per page</option>
+                                <option value="15">15 Rows per page</option>
+                                <option value="25">25 Rows per page</option>
+                                <option value="50">50 Rows per page</option>
+                                <option value="100">100 Rows per page</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400 group-hover:text-indigo-500 transition-colors">
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Clearance & Actions (Sticky Bottom) --}}
+                <div class="p-5 pt-0 flex flex-col gap-2.5 shrink-0">
+                    <button @click="clearFilters()" 
+                        class="w-full px-4 py-2.5 bg-rose-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-700 hover:-translate-y-0.5 transition-all text-left flex items-center justify-between group">
+                        <span>Purge All Filters</span>
+                        <i class="fas fa-eraser group-hover:rotate-12 transition-transform opacity-90 group-hover:opacity-100"></i>
+                    </button>
+                    <button @click="showSidebar = false" 
+                        class="w-full px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:-translate-y-0.5 transition-all text-left flex items-center justify-between group shadow-md shadow-indigo-500/20">
+                        <span>Hide Filters</span>
+                        <i class="fas fa-eye-slash group-hover:scale-110 transition-transform opacity-90 group-hover:opacity-100"></i>
                     </button>
                 </div>
             </div>
         </div>
+        {{-- /end: Right Column filters --}}
+
     </div>
+    {{-- /end: mt-8 grid --}}
 
     {{-- ═══════════════════════════════════════════════
          MODALS (Floating Premium Style)
@@ -542,6 +725,66 @@
             </div>
         </div>
     </div>
+
+    <!-- View Modal -->
+    <div x-show="showViewModal" class="fixed inset-0 z-50 overflow-y-auto px-4 py-6" x-transition.opacity style="display: none;">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="closeViewModal"></div>
+            
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg z-10 overflow-hidden relative border border-slate-100" x-transition.scale>
+                <div class="bg-gradient-to-br from-sky-500 to-sky-400 p-8 text-white relative">
+                    <div class="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+                    <div class="flex items-center justify-between relative z-10">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-xl border border-white/20">
+                                <i class="fas fa-eye text-xl text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-black tracking-tight" x-text="dataToView?.display_name || 'Details'"></h3>
+                                <p class="text-slate-300 text-[10px] font-black uppercase tracking-widest mt-1">Permission Data Record</p>
+                            </div>
+                        </div>
+                        <button @click="closeViewModal" class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors cursor-pointer">
+                            <i class="fas fa-times text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-8 space-y-6">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="space-y-1">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">System Identifier</p>
+                            <p class="font-mono text-sm text-slate-800 font-bold" x-text="dataToView?.name"></p>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Target Module</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider"
+                                      :class="getGroupClass(dataToView?.group)">
+                                    <i class="fas mr-1.5" :class="getGroupIcon(dataToView?.group)"></i>
+                                    <span x-text="formatGroupName(dataToView?.group)"></span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Auth Status</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                                      :class="dataToView?.is_active ? 'text-white bg-emerald-500 border border-emerald-200' : 'text-white bg-rose-500 border border-rose-200'">
+                                    <i class="fas" :class="dataToView?.is_active ? 'fa-check-circle' : 'fa-clock'"></i>
+                                    <span x-text="dataToView?.is_active ? 'Authorized' : 'Locked'"></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-8 py-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+                    <button @click="closeViewModal" class="px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all shadow-sm cursor-pointer">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @endsection
@@ -558,7 +801,9 @@
             editing: false,
             showAddModal: false,
             showDeleteModal: false,
+            showViewModal: false,
             showAdvancedFilters: false,
+            showSidebar: false,
             
             // Data & Filtering
             permissions: [],
@@ -567,6 +812,8 @@
             searchQuery: '',
             filterGroup: '',
             filterStatus: '',
+            filterDateFrom: '',
+            filterDateTo: '',
             sortField: 'display_name',
             sortDirection: 'asc',
             availableGroups: [],
@@ -574,9 +821,10 @@
             // Selection Logic
             selectedIds: [],
             permissionToDelete: null,
+            dataToView: null,
             
             pagination: {
-                current_page: 1, last_page: 1, per_page: 15, total: 0, from: 0, to: 0
+                current_page: 1, last_page: 1, per_page: 10, total: 0, from: 0, to: 0
             },
             
             form: { id: null, name: '', display_name: '', group: '' },
@@ -594,6 +842,8 @@
                         search: this.searchQuery,
                         group: this.filterGroup,
                         status: this.filterStatus,
+                        date_from: this.filterDateFrom,
+                        date_to: this.filterDateTo,
                         sort: this.sortField,
                         direction: this.sortDirection,
                         per_page: this.pagination.per_page
@@ -668,8 +918,55 @@
                 this.searchQuery = '';
                 this.filterGroup = '';
                 this.filterStatus = '';
+                this.filterDateFrom = '';
+                this.filterDateTo = '';
                 this.pagination.current_page = 1;
                 this.fetchPermissions();
+            },
+
+            hasActiveFilters() {
+                return this.searchQuery !== '' || 
+                       this.filterGroup !== '' || 
+                       this.filterStatus !== '' || 
+                       this.filterDateFrom !== '' || 
+                       this.filterDateTo !== '';
+            },
+
+            getActiveFilterCount() {
+                let count = 0;
+                if (this.searchQuery) count++;
+                if (this.filterGroup) count++;
+                if (this.filterStatus) count++;
+                if (this.filterDateFrom || this.filterDateTo) count++;
+                return count;
+            },
+
+            getDateRangeText() {
+                if (this.filterDateFrom && this.filterDateTo) {
+                    return `${this.filterDateFrom} to ${this.filterDateTo}`;
+                }
+                return this.filterDateFrom || this.filterDateTo || '';
+            },
+
+            applyQuickFilter(period) {
+                const now = new Date();
+                let start = new Date();
+                
+                switch(period) {
+                    case 'today':
+                        start = now;
+                        break;
+                    case 'week':
+                        start.setDate(now.getDate() - 7);
+                        break;
+                    case 'month':
+                        start.setMonth(now.getMonth() - 1);
+                        break;
+                }
+
+                this.filterDateFrom = start.toISOString().split('T')[0];
+                this.filterDateTo = now.toISOString().split('T')[0];
+                this.searchPermissions();
             },
             
             changePage(page) {
@@ -709,6 +1006,16 @@
             },
 
             // CRUD & Actions
+            openViewModal(permission) {
+                this.dataToView = permission;
+                this.showViewModal = true;
+            },
+            
+            closeViewModal() {
+                this.showViewModal = false;
+                setTimeout(() => { this.dataToView = null; }, 300);
+            },
+
             openAddModal() {
                 this.editing = false;
                 this.form = { id: null, name: '', display_name: '', group: '' };

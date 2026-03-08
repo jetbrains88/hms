@@ -3,8 +3,6 @@
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Admin\DesignationController;
-use App\Http\Controllers\Admin\OfficeController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
@@ -24,12 +22,16 @@ use App\Http\Controllers\Lab\DashboardController as LabDashboardController;
 use App\Http\Controllers\Lab\OrderController as LabOrderController;
 use App\Http\Controllers\Lab\ReportController as LabReportController;
 use App\Http\Controllers\Lab\ResultController;
+use App\Http\Controllers\Lab\TestParameterController;
+use App\Http\Controllers\Lab\TestTypeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Nurse\DashboardController as NurseDashboardController;
 use App\Http\Controllers\Nurse\VitalController;
 use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
 use App\Http\Controllers\Pharmacy\InventoryController;
+use App\Http\Controllers\Pharmacy\MedicineCategoryController;
 use App\Http\Controllers\Pharmacy\MedicineController;
+use App\Http\Controllers\Pharmacy\MedicineFormController;
 use App\Http\Controllers\Pharmacy\PrescriptionController as PharmacyPrescriptionController;
 use App\Http\Controllers\Pharmacy\ReportController as PharmacyReportController;
 use App\Http\Controllers\Pharmacy\StockAlertController;
@@ -37,6 +39,8 @@ use App\Http\Controllers\PrintController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Reception\AppointmentController as ReceptionAppointmentController;
 use App\Http\Controllers\Reception\DashboardController as ReceptionDashboardController;
+use App\Http\Controllers\Reception\DesignationController as ReceptionDesignationController;
+use App\Http\Controllers\Reception\OfficeController as ReceptionOfficeController;
 use App\Http\Controllers\Reception\PatientController as ReceptionPatientController;
 use App\Http\Controllers\Reception\QueueController;
 use App\Http\Controllers\Reception\VisitController as ReceptionVisitController;
@@ -200,12 +204,6 @@ Route::middleware(['auth', 'role:super_admin,admin'])->prefix('admin')->name('ad
     Route::get('/branches/{branch}/users', [BranchController::class, 'users'])
         ->name('branches.users');
 
-    // Office Management (NHMP Hierarchy)
-    Route::resource('offices', OfficeController::class);
-
-    // Designation Management
-    Route::resource('designations', DesignationController::class);
-
     // Audit Logs
     Route::get('/audit-logs/stats', [AuditLogController::class, 'stats'])->name('audit.stats');
     Route::get('/audit-logs/data', [AuditLogController::class, 'data'])->name('audit.data');
@@ -296,6 +294,20 @@ Route::middleware(['auth', 'role:reception'])->prefix('reception')->name('recept
     Route::get('/quick-search', [ReceptionDashboardController::class, 'quickSearch'])
         ->name('quick-search');
 
+    // Offices & Designations
+
+    Route::get('/offices', [ReceptionOfficeController::class, 'index'])->name('offices.index');
+    Route::get('/offices/stats', [ReceptionOfficeController::class, 'stats'])->name('offices.stats');
+    Route::get('/offices/data', [ReceptionOfficeController::class, 'data'])->name('offices.data');
+    Route::post('/offices/bulk-destroy', [ReceptionOfficeController::class, 'bulkDestroy'])->name('offices.bulk-destroy');
+    Route::resource('offices', ReceptionOfficeController::class)->except(['show', 'create', 'edit', 'index']);
+
+    Route::get('/designations', [ReceptionDesignationController::class, 'index'])->name('designations.index');
+    Route::get('/designations/stats', [ReceptionDesignationController::class, 'stats'])->name('designations.stats');
+    Route::get('/designations/data', [ReceptionDesignationController::class, 'data'])->name('designations.data');
+    Route::post('/designations/bulk-destroy', [ReceptionDesignationController::class, 'bulkDestroy'])->name('designations.bulk-destroy');
+    Route::resource('designations', ReceptionDesignationController::class)->except(['show', 'create', 'edit', 'index']);
+
     // Patient Management - static routes MUST come before resource() to avoid {patient} wildcard
     Route::get('/patients/template/download', [ReceptionPatientController::class, 'downloadTemplate'])
         ->name('patients.template');
@@ -367,6 +379,19 @@ Route::middleware(['auth', 'role:pharmacy'])->prefix('pharmacy')->name('pharmacy
 
     // Medicine Management
     Route::resource('medicines', MedicineController::class);
+
+    // Medicine Categories & Forms
+    Route::get('/medicine-categories/stats', [MedicineCategoryController::class, 'stats'])->name('medicine-categories.stats');
+    Route::get('/medicine-categories/data', [MedicineCategoryController::class, 'data'])->name('medicine-categories.data');
+    Route::post('/medicine-categories/bulk-destroy', [MedicineCategoryController::class, 'bulkDestroy'])->name('medicine-categories.bulk-destroy');
+    Route::post('/medicine-categories/bulk-status', [MedicineCategoryController::class, 'bulkStatus'])->name('medicine-categories.bulk-status');
+    Route::post('/medicine-categories/{medicine_category}/toggle-status', [MedicineCategoryController::class, 'toggleStatus'])->name('medicine-categories.toggle-status');
+    Route::resource('medicine-categories', MedicineCategoryController::class)->except(['show', 'create', 'edit']);
+
+    Route::get('/medicine-forms/stats', [MedicineFormController::class, 'stats'])->name('medicine-forms.stats');
+    Route::get('/medicine-forms/data', [MedicineFormController::class, 'data'])->name('medicine-forms.data');
+    Route::post('/medicine-forms/bulk-destroy', [MedicineFormController::class, 'bulkDestroy'])->name('medicine-forms.bulk-destroy');
+    Route::resource('medicine-forms', MedicineFormController::class)->except(['show', 'create', 'edit']);
 
     // Inventory Management
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory');
@@ -448,6 +473,17 @@ Route::middleware(['auth', 'role:lab'])->prefix('lab')->name('lab.')->group(func
     // AJAX endpoints
     Route::get('/pending', [LabOrderController::class, 'pending'])->name('pending');
     Route::get('/statistics', [LabDashboardController::class, 'statistics'])->name('statistics');
+
+    // Test Types & Parameters
+    Route::get('/test-types/stats', [TestTypeController::class, 'stats'])->name('test-types.stats');
+    Route::get('/test-types/data', [TestTypeController::class, 'data'])->name('test-types.data');
+    Route::post('/test-types/bulk-destroy', [TestTypeController::class, 'bulkDestroy'])->name('test-types.bulk-destroy');
+    Route::resource('test-types', TestTypeController::class)->except(['show', 'create', 'edit']);
+
+    Route::get('/test-parameters/stats', [TestParameterController::class, 'stats'])->name('test-parameters.stats');
+    Route::get('/test-parameters/data', [TestParameterController::class, 'data'])->name('test-parameters.data');
+    Route::post('/test-parameters/bulk-destroy', [TestParameterController::class, 'bulkDestroy'])->name('test-parameters.bulk-destroy');
+    Route::resource('test-parameters', TestParameterController::class)->except(['show', 'create', 'edit']);
 });
 
 // ============================================
