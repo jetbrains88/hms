@@ -580,17 +580,17 @@
                                 {{-- Parameter Cards Grid --}}
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <template x-for="param in params" :key="param.id">
-                                        <div class="p-4 bg-white border border-indigo-100 rounded-2xl flex flex-col gap-3 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-500/5 transition-all group relative overflow-hidden">
+                                        <div class="p-4 bg-white border border-indigo-400 rounded-2xl flex flex-col gap-3 hover:border-maroon-400 hover:shadow-xl hover:shadow-maroon-500/5 transition-all group relative overflow-hidden">
                                             <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-indigo-50 rounded-full group-hover:bg-indigo-50 transition-colors"></div>
                                             
                                             <div class="flex items-center justify-between gap-3 relative z-10">
                                                 <div class="flex items-center gap-3">
-                                                    <div class="w-8 h-8 rounded-xl bg-indigo-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all shadow-sm">
+                                                    <div class="w-8 h-8 rounded-xl bg-indigo-600 border text-white border-indigo-600  flex items-center justify-center group-hover:bg-maroon-600 group-hover:border-maroon-600 transition-all shadow-sm">
                                                         <i class="fas fa-flask text-xs"></i>
                                                     </div>
                                                     <span class="text-xs font-black text-slate-700" x-text="param.name"></span>
                                                 </div>
-                                                <i class="fas fa-chevron-right text-[10px] text-slate-300 group-hover:text-indigo-600 transition-colors"></i>
+                                                <i class="fas fa-chevron-right text-[10px] text-indigo-600 group-hover:text-indigo-600 transition-colors"></i>
                                             </div>
 
                                             <div class="flex flex-wrap items-center gap-2 relative z-10 pt-1 border-t border-slate-50 group-hover:border-indigo-50 transition-colors">
