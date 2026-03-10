@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{{ auth()->user()->getPreference('theme', 'vibrant') }}">
 
 <head>
     <meta charset="UTF-8">
@@ -230,6 +230,92 @@
             color: #2563eb;
             font-weight: 600;
         }
+
+        /* --- Theme System --- */
+        :root, [data-theme="vibrant"] {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --primary: #4f46e5;
+            --primary-light: #eef2ff;
+            --accent: #f59e0b;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --shadow: rgba(79, 70, 229, 0.08);
+            --sidebar-active-bg: linear-gradient(90deg, #eef2ff 0%, #ffffff 100%);
+        }
+
+        [data-theme="nhmp"] {
+            --bg-body: #F1F5F9;
+            --bg-card: #FFFFFF;
+            --primary: #1E3A8A;
+            --primary-light: #eff6ff;
+            --accent: #D97706;
+            --text-main: #0F172A;
+            --text-muted: #64748B;
+            --shadow: rgba(30, 58, 138, 0.08);
+            --sidebar-active-bg: linear-gradient(90deg, #eff6ff 0%, #ffffff 100%);
+        }
+
+        [data-theme="clinical"] {
+            --bg-body: #F0F4F8;
+            --primary: #2563EB;
+            --primary-light: #eff6ff;
+            --accent: #0891B2;
+            --text-main: #1E293B;
+            --shadow: rgba(37, 99, 235, 0.08);
+            --sidebar-active-bg: linear-gradient(90deg, #eff6ff 0%, #ffffff 100%);
+        }
+
+        [data-theme="green"] {
+            --bg-body: #F2FBF7;
+            --primary: #10B981;
+            --primary-light: #ecfdf5;
+            --accent: #14B8A6;
+            --text-main: #064E3B;
+            --shadow: rgba(16, 185, 129, 0.08);
+            --sidebar-active-bg: linear-gradient(90deg, #ecfdf5 0%, #ffffff 100%);
+        }
+
+        [data-theme="minimal"] {
+            --bg-body: #F8FAFC;
+            --primary: #334155;
+            --primary-light: #f1f5f9;
+            --accent: #64748B;
+            --text-main: #020617;
+            --shadow: rgba(51, 65, 85, 0.05);
+            --sidebar-active-bg: linear-gradient(90deg, #f1f5f9 0%, #ffffff 100%);
+        }
+
+        [data-theme="warm"] {
+            --bg-body: #FAFAF9;
+            --primary: #D95D39;
+            --primary-light: #fff7ed;
+            --accent: #DDA15E;
+            --text-main: #292524;
+            --shadow: rgba(217, 93, 57, 0.08);
+            --sidebar-active-bg: linear-gradient(90deg, #fff7ed 0%, #ffffff 100%);
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+        }
+
+        .menu-item-active {
+            background: var(--sidebar-active-bg) !important;
+            border-right: 3px solid var(--primary) !important;
+            color: var(--primary) !important;
+        }
+
+        .menu-item-hover:hover {
+            background: var(--sidebar-active-bg) !important;
+            border-right: 3px solid var(--primary) !important;
+        }
+        
+        .bg-primary-theme { background-color: var(--primary); }
+        .text-primary-theme { color: var(--primary); }
+        .border-primary-theme { border-color: var(--primary); }
+        .shadow-theme { box-shadow: 0 4px 20px var(--shadow); }
     </style>
 
     @stack('styles')
@@ -283,11 +369,12 @@
 
         <!-- Sidebar -->
         <aside
-            class="fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200 shadow-xl sidebar-transition flex flex-col lg:static"
+            class="fixed inset-y-0 left-0 z-50 border-r border-slate-200 shadow-xl sidebar-transition flex flex-col lg:static shadow-theme"
+            style="background-color: var(--bg-card);"
             :class="sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full lg:w-0 lg:translate-x-0 lg:overflow-hidden'">
 
             <!-- Logo Area -->
-            <div class="h-20 flex items-center justify-between px-6 border-b border-slate-100 bg-white">
+            <div class="h-20 flex items-center justify-between px-6 border-b border-slate-100" style="background-color: var(--bg-card);">
                 <div class="flex items-center gap-3 overflow-hidden whitespace-nowrap">
                     <div
                         class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
@@ -740,9 +827,9 @@
         </aside>
 
         <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50 h-screen overflow-hidden relative">
+        <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative" style="background-color: var(--bg-body);">
             <!-- Header -->
-            <header class="h-20 bg-white/80 backdrop-blur-xl sticky top-0 z-30 border-b border-slate-200 shadow-sm">
+            <header class="h-20 sticky top-0 z-30 border-b border-slate-200 shadow-sm" style="background-color: var(--bg-card);">
                 <div class="px-6 h-full flex justify-between items-center">
                     <!-- Left side -->
                     <div class="flex items-center gap-4">

@@ -92,7 +92,7 @@ class ProfileController extends Controller
     public function updateSettings(Request $request)
     {
         $request->validate([
-            'theme' => 'in:light,dark',
+            'theme' => 'in:vibrant,nhmp,clinical,green,minimal,warm',
             'notifications_email' => 'boolean',
             'notifications_browser' => 'boolean',
         ]);

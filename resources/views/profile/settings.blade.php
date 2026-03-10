@@ -14,31 +14,40 @@
                 <div class="space-y-6">
                     <!-- Theme Preference -->
                     <div>
-                        <h3 class="text-md font-semibold text-slate-800 mb-4">Appearance</h3>
-                        <div class="grid grid-cols-2 gap-4">
-                            <label class="relative">
-                                <input type="radio" name="theme" value="light" class="sr-only"
-                                    {{ ($preferences['theme'] ?? 'light') == 'light' ? 'checked' : '' }}>
-                                <div
-                                    class="border-2 {{ ($preferences['theme'] ?? 'light') == 'light' ? 'border-blue-500 bg-blue-50' : 'border-slate-200' }} rounded-xl p-4 cursor-pointer hover:border-blue-300">
-                                    <div class="flex items-center justify-center mb-2">
-                                        <i class="fas fa-sun text-2xl text-amber-500"></i>
+                        <h3 class="text-md font-semibold text-slate-800 mb-4">Appearance & Theme</h3>
+                        @php
+                            $themes = [
+                                ['id' => 'vibrant', 'name' => 'Vibrant (Default)', 'color' => '#4f46e5', 'icon' => 'fa-bolt'],
+                                ['id' => 'nhmp', 'name' => 'NHMP Official', 'color' => '#1E3A8A', 'icon' => 'fa-hospital'],
+                                ['id' => 'clinical', 'name' => 'Clinical Blue', 'color' => '#2563EB', 'icon' => 'fa-stethoscope'],
+                                ['id' => 'green', 'name' => 'Healing Green', 'color' => '#10B981', 'icon' => 'fa-leaf'],
+                                ['id' => 'minimal', 'name' => 'Modern Minimal', 'color' => '#334155', 'icon' => 'fa-adjust'],
+                                ['id' => 'warm', 'name' => 'Warm Compassion', 'color' => '#D95D39', 'icon' => 'fa-heart'],
+                            ];
+                            $currentTheme = $preferences['theme'] ?? 'vibrant';
+                        @endphp
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            @foreach($themes as $theme)
+                                <label class="relative group">
+                                    <input type="radio" name="theme" value="{{ $theme['id'] }}" class="sr-only"
+                                        {{ $currentTheme == $theme['id'] ? 'checked' : '' }}>
+                                    <div
+                                        class="border-2 {{ $currentTheme == $theme['id'] ? 'border-blue-500 bg-blue-50/50 shadow-sm' : 'border-slate-100 bg-slate-50/30' }} rounded-2xl p-4 cursor-pointer hover:border-blue-300 hover:bg-white transition-all duration-300 text-center">
+                                        <div class="flex items-center justify-center mb-3">
+                                            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110" 
+                                                 style="background-color: {{ $theme['color'] }}">
+                                                <i class="fas {{ $theme['icon'] }} text-lg"></i>
+                                            </div>
+                                        </div>
+                                        <p class="text-xs font-bold text-slate-700">{{ $theme['name'] }}</p>
+                                        @if($currentTheme == $theme['id'])
+                                            <div class="absolute top-2 right-2">
+                                                <i class="fas fa-check-circle text-blue-500 text-sm"></i>
+                                            </div>
+                                        @endif
                                     </div>
-                                    <p class="text-sm font-medium text-center">Light Mode</p>
-                                </div>
-                            </label>
-
-                            <label class="relative">
-                                <input type="radio" name="theme" value="dark" class="sr-only"
-                                    {{ ($preferences['theme'] ?? 'light') == 'dark' ? 'checked' : '' }}>
-                                <div
-                                    class="border-2 {{ ($preferences['theme'] ?? 'light') == 'dark' ? 'border-blue-500 bg-blue-50' : 'border-slate-200' }} rounded-xl p-4 cursor-pointer hover:border-blue-300">
-                                    <div class="flex items-center justify-center mb-2">
-                                        <i class="fas fa-moon text-2xl text-slate-700"></i>
-                                    </div>
-                                    <p class="text-sm font-medium text-center">Dark Mode</p>
-                                </div>
-                            </label>
+                                </label>
+                            @endforeach
                         </div>
                     </div>
 
